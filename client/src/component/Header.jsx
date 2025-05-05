@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { useNavigate } from 'react-router-dom';
+
 
 const Header = () => {
     const [location, setLocation] = useState('');
     const [checkIn, setCheckIn] = useState(null);
     const [checkOut, setCheckOut] = useState(null);
     const [error, setError] = useState('');
-
+    const navigate = useNavigate();
+    const handleFindNest = () => {
+        navigate('/home');
+    };
     const handleSearch = (e) => {
         e.preventDefault();
         if (!location || !checkIn || !checkOut) {
@@ -22,7 +27,6 @@ const Header = () => {
         };
         console.log('Search query:', query);
     };
-
     return (
         <header className="bg-white font-sans">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -40,7 +44,7 @@ const Header = () => {
                     {/* Card (Search Form) */}
                     <div className="order-2 md:order-1 relative z-10 md:-mr-12">
                         <div className="bg-white shadow-lg rounded-2xl p-14 max-w-3xl mt-8 scale-105">
-                        <h1 className="text-3xl font-bold text-black mb-6">
+                            <h1 className="text-3xl font-bold text-black mb-6">
                                 Find Your Perfect Nest
                             </h1>
                             <form onSubmit={handleSearch} className="space-y-4">
@@ -104,6 +108,15 @@ const Header = () => {
                                     className="w-full py-2 px-4 bg-black text-white font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
                                 >
                                     Search
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleFindNest
+                                }
+                                    className="w-full py-2 px-4 bg-black text-white font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-4"
+                                    aria-label="Find your nest"
+                                >
+                                    Find Your Nest
                                 </button>
                             </form>
                         </div>
