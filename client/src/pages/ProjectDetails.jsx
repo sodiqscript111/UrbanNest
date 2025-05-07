@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { PaystackButton } from 'react-paystack';
+import { motion } from 'framer-motion';
 
 const PropertyDetails = () => {
     const { id } = useParams();
@@ -188,18 +189,74 @@ const PropertyDetails = () => {
         // PaystackButton will handle payment
     };
 
-    if (error) return <div className="text-red-500 p-4 max-w-7xl mx-auto">{error}</div>;
-    if (!listing) return <div className="p-4 max-w-7xl mx-auto">Loading...</div>;
+    // Animation variants
+    const imageVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+    };
+
+    const formVariants = {
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+    };
+
+    const modalVariants = {
+        hidden: { opacity: 0, scale: 0.95 },
+        visible: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } },
+    };
+
+    const detailsVariants = {
+        hidden: { opacity: 0, y: 10 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.2, ease: 'easeOut' } },
+    };
+
+    const messageVariants = {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { duration: 0.3 } },
+    };
+
+    if (error) return (
+        <motion.div
+            className="text-red-500 p-4 max-w-7xl mx-auto"
+            variants={messageVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            {error}
+        </motion.div>
+    );
+    if (!listing) return (
+        <motion.div
+            className="p-4 max-w-7xl mx-auto"
+            variants={messageVariants}
+            initial="hidden"
+            animate="visible"
+        >
+            Loading...
+        </motion.div>
+    );
 
     const images = listing.media && listing.media.length > 0
         ? listing.media.map((item) => `https://urbannestbucket.s3.eu-north-1.amazonaws.com/${item.media_url}`)
         : ['https://via.placeholder.com/800x600'];
 
     return (
-        <section className="bg-white font-sans py-12">
+        <motion.section
+            className="bg-white font-sans py-12"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+        >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8">
-                    <h1 className="text-2xl sm:text-3xl font-bold text-black mb-4">{listing.title}</h1>
+                    <motion.h1
+                        className="text-2xl sm:text-3xl font-bold text-black mb-4"
+                        variants={detailsVariants}
+                        initial="hidden"
+                        animate="visible"
+                    >
+                        {listing.title}
+                    </motion.h1>
                     <div className="relative group mb-6">
                         <div
                             ref={scrollRef}
@@ -207,63 +264,86 @@ const PropertyDetails = () => {
                             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                         >
                             {images.map((image, index) => (
-                                <img
+                                <motion.img
                                     key={index}
                                     src={image}
                                     alt={`${listing.title} - Image ${index + 1}`}
-                                    className="w-full h-80 sm:h-[32rem] object-cover flex-shrink-0 snap-center cursor-pointer"
+                                    className="w-full h-80 sm:h-[32rem] object-cover flex-shrink-0 snap-center cursor-pointer hover:scale-102 transition-transform duration-200"
                                     loading="lazy"
                                     onClick={() => openImageModal(image)}
+                                    variants={imageVariants}
+                                    initial="hidden"
+                                    animate="visible"
+                                    transition={{ delay: index * 0.1 }}
                                 />
                             ))}
                         </div>
                         {images.length > 1 && (
                             <>
-                                <button
+                                <motion.button
                                     onClick={() => handleScroll('left')}
                                     disabled={!canScrollLeft}
                                     className={`absolute left-4 sm:left-6 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 sm:p-4 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
                                         !canScrollLeft ? 'opacity-50 cursor-not-allowed' : ''
                                     }`}
                                     aria-label="Previous image"
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    transition={{ duration: 0.2 }}
                                 >
                                     <ChevronLeft className="h-8 w-8 sm:h-10 sm:w-10" />
-                                </button>
-                                <button
+                                </motion.button>
+                                <motion.button
                                     onClick={() => handleScroll('right')}
                                     disabled={!canScrollRight}
                                     className={`absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 sm:p-4 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
                                         !canScrollRight ? 'opacity-50 cursor-not-allowed' : ''
                                     }`}
                                     aria-label="Next image"
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    transition={{ duration: 0.2 }}
                                 >
                                     <ChevronRight className="h-8 w-8 sm:h-10 sm:w-10" />
-                                </button>
+                                </motion.button>
                             </>
                         )}
                     </div>
 
                     {selectedImage && (
-                        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+                        <motion.div
+                            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+                            variants={modalVariants}
+                            initial="hidden"
+                            animate="visible"
+                        >
                             <div ref={modalRef} className="relative max-w-5xl w-full p-4">
-                                <button
+                                <motion.button
                                     onClick={() => setSelectedImage(null)}
                                     className="absolute top-2 right-2 bg-black text-white p-2 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
                                     aria-label="Close image modal"
+                                    whileHover={{ scale: 1.1 }}
+                                    whileTap={{ scale: 0.9 }}
+                                    transition={{ duration: 0.2 }}
                                 >
                                     <X className="h-6 w-6" />
-                                </button>
+                                </motion.button>
                                 <img
                                     src={selectedImage}
                                     alt="Full-size property image"
                                     className="w-full max-h-[90vh] object-contain"
                                 />
                             </div>
-                        </div>
+                        </motion.div>
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-2">
+                        <motion.div
+                            className="md:col-span-2"
+                            variants={detailsVariants}
+                            initial="hidden"
+                            animate="visible"
+                        >
                             <div className="flex justify-between items-center mb-4">
                                 <h2 className="text-lg sm:text-xl font-bold text-black">{listing.title}</h2>
                                 <span className="text-sm sm:text-base font-medium text-black">4.5 ★ (100)</span>
@@ -282,8 +362,13 @@ const PropertyDetails = () => {
                             <p className="text-sm sm:text-base text-gray-600 mb-4">
                                 Location: {listing.location}
                             </p>
-                        </div>
-                        <div className="md:col-span-1">
+                        </motion.div>
+                        <motion.div
+                            className="md:col-span-1"
+                            variants={formVariants}
+                            initial="hidden"
+                            animate="visible"
+                        >
                             <form onSubmit={handleBooking} className="space-y-4 bg-gray-50 p-4 sm:p-6 rounded-lg">
                                 <h3 className="text-lg sm:text-xl font-bold text-black mb-4">Book Your Stay</h3>
                                 <div>
@@ -297,7 +382,7 @@ const PropertyDetails = () => {
                                         value={formData.email}
                                         onChange={handleInputChange}
                                         placeholder="Enter your email"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
                                         aria-label="Email address"
                                         required
                                     />
@@ -313,7 +398,7 @@ const PropertyDetails = () => {
                                         value={formData.name}
                                         onChange={handleInputChange}
                                         placeholder="Enter your name"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
                                         aria-label="Full name"
                                         required
                                     />
@@ -329,7 +414,7 @@ const PropertyDetails = () => {
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         placeholder="Enter your phone number (e.g., +2341234567890)"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
                                         aria-label="Phone number"
                                         required
                                     />
@@ -344,7 +429,7 @@ const PropertyDetails = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={new Date()}
                                         placeholderText="Select date"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
                                         aria-label="Check-in date"
                                     />
                                 </div>
@@ -365,27 +450,56 @@ const PropertyDetails = () => {
                                         }}
                                         minDate={checkIn || new Date()}
                                         placeholderText="Select date"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
                                         aria-label="Check-out date"
                                     />
                                 </div>
-                                {bookingError && <p className="text-red-500 text-sm">{bookingError}</p>}
+                                {bookingError && (
+                                    <motion.p
+                                        className="text-red-500 text-sm"
+                                        variants={messageVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                    >
+                                        {bookingError}
+                                    </motion.p>
+                                )}
                                 {paymentStatus === 'success' && (
-                                    <p className="text-green-600 text-sm">Booking created successfully!</p>
+                                    <motion.p
+                                        className="text-green-600 text-sm"
+                                        variants={messageVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                    >
+                                        Booking created successfully!
+                                    </motion.p>
                                 )}
                                 {paymentStatus === 'failed' && (
-                                    <p className="text-red-500 text-sm">Payment failed. Please try again.</p>
+                                    <motion.p
+                                        className="text-red-500 text-sm"
+                                        variants={messageVariants}
+                                        initial="hidden"
+                                        animate="visible"
+                                    >
+                                        Payment failed. Please try again.
+                                    </motion.p>
                                 )}
-                                <PaystackButton
-                                    className="w-full py-2 px-4 bg-black text-white font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                    {...paystackProps}
-                                />
+                                <motion.div
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <PaystackButton
+                                        className="w-full py-2 px-4 bg-black text-white font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        {...paystackProps}
+                                    />
+                                </motion.div>
                             </form>
-                        </div>
+                        </motion.div>
                     </div>
                 </div>
             </div>
-        </section>
+        </motion.section>
     );
 };
 

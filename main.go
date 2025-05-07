@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -19,13 +20,19 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/go-resty/resty/v2"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	err := db.InitDB()
 	if err != nil {
-		fmt.Printf("❌ Failed to initialize database: %v\n", err)
+		fmt.Printf("Failed to initialize database: %v\n", err)
 		os.Exit(1)
+	}
+
+	err = godotenv.Load()
+	if err != nil {
+		fmt.Printf("Failed to load .env: %v\n", err)
 	}
 
 	router := gin.Default()
@@ -39,7 +46,6 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// Public routes
 	router.GET("/listings", getAllListing)
 	router.GET("/listings/:id", getListingById)
 	router.POST("/signup", addCustomer)
@@ -49,8 +55,8 @@ func main() {
 	router.POST("/booking", createBooking)
 	router.GET("/getmybookings/:id", getBookingsByCustomer)
 	router.GET("/api/upload-url", GeneratePresignedURL)
+	router.POST("/verify-email", verifyEmail)
 
-	// Authenticated routes
 	authenticated := router.Group("/")
 	authenticated.Use(middleware.Authorize)
 	authenticated.POST("/listings", addListing)
@@ -58,11 +64,204 @@ func main() {
 	authenticated.PUT("/listings/:id", editListing)
 	authenticated.DELETE("/listings/:id", deleteWithId)
 
-	fmt.Println("🚀 Server starting on :8080")
+	fmt.Println("Server starting on :8080")
 	if err := router.Run(":8080"); err != nil {
 		fmt.Printf("Failed to start server: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+func verifyEmail(c *gin.Context) {
+	body, _ := c.GetRawData()
+	fmt.Printf("Received /verify-email request: Body=%s, Headers=%v\n", string(body), c.Request.Header)
+
+	var rawPayload map[string]interface{}
+	if err := json.Unmarshal(body, &rawPayload); err != nil {
+		fmt.Printf("Failed to parse raw JSON: %v\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON format"})
+		return
+	}
+
+	email, ok := rawPayload["email"].(string)
+	if !ok || email == "" {
+		fmt.Printf("Missing or invalid 'email' field: %v\n", rawPayload)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data: missing or invalid 'email' field"})
+		return
+	}
+
+	fmt.Printf("Parsed email: %s\n", email)
+
+	emailRegex := regexp.MustCompile(`^[^@]+@[^@]+\.[^@]+$`)
+	if !emailRegex.MatchString(email) {
+		fmt.Printf("Invalid email format: %s\n", email)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+		return
+	}
+
+	client := resty.New()
+	resp, err := client.R().
+		SetQueryParams(map[string]string{
+			"api_key": os.Getenv("ZERBOUNCE_API_KEY"),
+			"email":   email,
+		}).
+		Get("https://api.zerobounce.net/v2/validate")
+	if err != nil {
+		fmt.Printf("Failed to verify email with ZeroBounce: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify email"})
+		return
+	}
+
+	fmt.Printf("ZeroBounce response: StatusCode=%d, Body=%s\n", resp.StatusCode(), string(resp.Body()))
+
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Printf("ZeroBounce returned non-200 status: %d\n", resp.StatusCode())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Email verification failed with status %d", resp.StatusCode())})
+		return
+	}
+
+	var zbResponse struct {
+		Address       string `json:"address"`
+		Status        string `json:"status"`
+		SubStatus     string `json:"sub_status"`
+		FreeEmail     bool   `json:"free_email"`
+		Disposable    bool   `json:"disposable"`
+		CatchAll      bool   `json:"catch_all"`
+		MXFound       string `json:"mx_found"`
+		SMTPValid     string `json:"smtp_valid"`
+		Domain        string `json:"domain"`
+		DomainAgeDays string `json:"domain_age_days"`
+		FirstName     string `json:"firstname"`
+		LastName      string `json:"lastname"`
+		Gender        string `json:"gender"`
+		Country       string `json:"country"`
+		Region        string `json:"region"`
+		City          string `json:"city"`
+		ZipCode       string `json:"zipcode"`
+		ProcessedAt   string `json:"processed_at"`
+		ErrorMessage  string `json:"error_message"`
+	}
+	if err := json.Unmarshal(resp.Body(), &zbResponse); err != nil {
+		fmt.Printf("Failed to parse ZeroBounce response: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse email verification response"})
+		return
+	}
+
+	if zbResponse.ErrorMessage != "" {
+		fmt.Printf("ZeroBounce API error: %s\n", zbResponse.ErrorMessage)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Email verification failed: %s", zbResponse.ErrorMessage)})
+		return
+	}
+
+	mxFound := zbResponse.MXFound == "true"
+	smtpValid := zbResponse.SMTPValid == "true"
+
+	if zbResponse.Status != "valid" || !mxFound || !smtpValid {
+		fmt.Printf("Email verification failed: %s (Status: %s, SubStatus: %s, MXFound: %s, SMTPValid: %s)\n",
+			email, zbResponse.Status, zbResponse.SubStatus, zbResponse.MXFound, zbResponse.SMTPValid)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email does not exist or is invalid", "status": zbResponse.Status})
+		return
+	}
+	if zbResponse.Disposable {
+		fmt.Printf("Disposable email detected: %s\n", email)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Disposable emails are not allowed", "status": "disposable"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "valid"})
+}
+
+func addCustomer(c *gin.Context) {
+	var customer models.Customer
+	if err := c.ShouldBind(&customer); err != nil {
+		fmt.Printf("Failed to bind customer JSON: %v\n", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	emailRegex := regexp.MustCompile(`^[^@]+@[^@]+\.[^@]+$`)
+	if !emailRegex.MatchString(customer.Email) {
+		fmt.Printf("Invalid email format: %s\n", customer.Email)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+		return
+	}
+
+	client := resty.New()
+	resp, err := client.R().
+		SetQueryParams(map[string]string{
+			"api_key": os.Getenv("ZERBOUNCE_API_KEY"),
+			"email":   customer.Email,
+		}).
+		Get("https://api.zerobounce.net/v2/validate")
+	if err != nil {
+		fmt.Printf("Failed to verify email with ZeroBounce: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to verify email"})
+		return
+	}
+
+	fmt.Printf("ZeroBounce response: StatusCode=%d, Body=%s\n", resp.StatusCode(), string(resp.Body()))
+
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Printf("ZeroBounce returned non-200 status: %d\n", resp.StatusCode())
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Email verification failed with status %d", resp.StatusCode())})
+		return
+	}
+
+	var zbResponse struct {
+		Address       string `json:"address"`
+		Status        string `json:"status"`
+		SubStatus     string `json:"sub_status"`
+		FreeEmail     bool   `json:"free_email"`
+		Disposable    bool   `json:"disposable"`
+		CatchAll      bool   `json:"catch_all"`
+		MXFound       string `json:"mx_found"`
+		SMTPValid     string `json:"smtp_valid"`
+		Domain        string `json:"domain"`
+		DomainAgeDays string `json:"domain_age_days"`
+		FirstName     string `json:"firstname"`
+		LastName      string `json:"lastname"`
+		Gender        string `json:"gender"`
+		Country       string `json:"country"`
+		Region        string `json:"region"`
+		City          string `json:"city"`
+		ZipCode       string `json:"zipcode"`
+		ProcessedAt   string `json:"processed_at"`
+		ErrorMessage  string `json:"error_message"`
+	}
+	if err := json.Unmarshal(resp.Body(), &zbResponse); err != nil {
+		fmt.Printf("Failed to parse ZeroBounce response: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse email verification response"})
+		return
+	}
+
+	if zbResponse.ErrorMessage != "" {
+		fmt.Printf("ZeroBounce API error: %s\n", zbResponse.ErrorMessage)
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Email verification failed: %s", zbResponse.ErrorMessage)})
+		return
+	}
+
+	mxFound := zbResponse.MXFound == "true"
+	smtpValid := zbResponse.SMTPValid == "true"
+
+	if zbResponse.Status != "valid" || !mxFound || !smtpValid {
+		fmt.Printf("Email verification failed: %s (Status: %s, SubStatus: %s, MXFound: %s, SMTPValid: %s)\n",
+			customer.Email, zbResponse.Status, zbResponse.SubStatus, zbResponse.MXFound, zbResponse.SMTPValid)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Email does not exist or is invalid"})
+		return
+	}
+	if zbResponse.Disposable {
+		fmt.Printf("Disposable email detected: %s\n", customer.Email)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Disposable emails are not allowed"})
+		return
+	}
+
+	err = models.AddCustomer(customer)
+	if err != nil {
+		fmt.Printf("Failed to add customer: %v\n", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Customer created successfully", "customer": customer})
 }
 
 func addListing(c *gin.Context) {
@@ -74,7 +273,7 @@ func addListing(c *gin.Context) {
 	}
 	fmt.Printf("Received payload: %+v\n", listing)
 
-	listing.ListerID = 1 // Replace with authenticated user ID
+	listing.ListerID = 1
 	listing.IsAvailable = true
 
 	if err := listing.Create(); err != nil {
@@ -97,6 +296,7 @@ func addListing(c *gin.Context) {
 }
 
 func getAllListing(c *gin.Context) {
+	fmt.Println("Listings route was hit")
 	listings, err := models.GetAllListing()
 	if err != nil {
 		fmt.Printf("Failed to fetch listings: %v\n", err)
@@ -104,7 +304,7 @@ func getAllListing(c *gin.Context) {
 		return
 	}
 	if len(listings) == 0 {
-		fmt.Println("⚠️ No listings found")
+		fmt.Println("No listings found")
 		c.JSON(http.StatusOK, gin.H{"listings": []models.Listing{}})
 		return
 	}
@@ -144,7 +344,7 @@ func deleteWithId(c *gin.Context) {
 
 	err = models.DeleteById(id)
 	if err != nil {
-		fmt.Printf(" Failed to delete listing ID %d: %v\n", id, err)
+		fmt.Printf("Failed to delete listing ID %d: %v\n", id, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -176,25 +376,6 @@ func editListing(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Listing updated successfully"})
-}
-
-func addCustomer(c *gin.Context) {
-	var customer models.Customer
-	err := c.ShouldBind(&customer)
-	if err != nil {
-		fmt.Printf("Failed to bind customer JSON: %v\n", err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	err = models.AddCustomer(customer)
-	if err != nil {
-		fmt.Printf("Failed to add customer: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "Customer created successfully", "customer": customer})
 }
 
 func customerLogin(c *gin.Context) {
@@ -294,7 +475,6 @@ func createBooking(c *gin.Context) {
 	}
 	fmt.Printf("Booking request: %+v\n", req)
 
-	// Verify Paystack payment
 	client := resty.New()
 	resp, err := client.R().
 		SetHeader("Authorization", "Bearer "+os.Getenv("PAYSTACK_SECRET_KEY")).
@@ -327,7 +507,6 @@ func createBooking(c *gin.Context) {
 		return
 	}
 
-	// Parse dates
 	startDate, err := time.Parse("2006-01-02", req.StartDate)
 	if err != nil {
 		fmt.Printf("Invalid start date format: %v\n", err)
@@ -341,7 +520,6 @@ func createBooking(c *gin.Context) {
 		return
 	}
 
-	// Fetch listing to validate amount
 	listing, err := models.GetById(int64(req.ListingID))
 	if err != nil {
 		fmt.Printf("Failed to fetch listing ID %d: %v\n", req.ListingID, err)
@@ -349,15 +527,14 @@ func createBooking(c *gin.Context) {
 		return
 	}
 	nights := int(endDate.Sub(startDate).Hours() / 24)
-	expectedAmount := int(float64(nights) * listing.Price * 100) // Convert NGN to kobo
-	fmt.Printf("📥 Amount check: Expected=%d, Paystack=%d, Nights=%d, Price=%.2f\n", expectedAmount, paystackResp.Data.Amount, nights, listing.Price)
+	expectedAmount := int(float64(nights) * listing.Price * 100)
+	fmt.Printf("Amount check: Expected=%d, Paystack=%d, Nights=%d, Price=%.2f\n", expectedAmount, paystackResp.Data.Amount, nights, listing.Price)
 	if paystackResp.Data.Amount != expectedAmount {
 		fmt.Printf("Payment amount mismatch: Expected=%d, Got=%d\n", expectedAmount, paystackResp.Data.Amount)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Payment amount mismatch"})
 		return
 	}
 
-	// Create booking
 	booking := models.Booking{
 		ListingId:  req.ListingID,
 		CustomerId: req.CustomerID,

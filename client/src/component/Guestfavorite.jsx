@@ -1,45 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import PropertyCard from './PropertyCard';
 
 const GuestFavorites = () => {
-    const favorites = [
-        {
-            id: 1,
-            media: ['https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
-            name: 'Lekki Luxury Loft',
-            rating: '4.8 ★ (233)',
-            description: 'Spacious loft with modern amenities, perfect for a relaxing stay in the heart of Lekki.',
-            availability: 'Available',
-            price: '250,000',
-        },
-        {
-            id: 2,
-            media: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
-            name: 'Victoria Island Retreat',
-            rating: '4.9 ★ (189)',
-            description: 'Cozy apartment with stunning ocean views, ideal for business or leisure.',
-            availability: 'Booked',
-            price: '300,000',
-        },
-        {
-            id: 3,
-            media: ['https://i.imgur.com/xfWhBCq.jpeg'],
-            name: 'Ikeja Modern Studio',
-            rating: '4.7 ★ (156)',
-            description: 'Chic studio with fast Wi-Fi and easy access to Lagos’s vibrant city center.',
-            availability: 'Available',
-            price: '200,000',
-        },
-        {
-            id: 4,
-            media: ['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'],
-            name: 'Banana Island Villa',
-            rating: '5.0 ★ (92)',
-            description: 'Luxurious villa with private pool, perfect for an exclusive getaway.',
-            availability: 'Booked',
-            price: '500,000',
-        },
-    ];
+    const [listings, setListings] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        async function fetchListings() {
+            try {
+                const res = await axios.get('/api/listings');
+                // Filter top 4 listings by price (descending)
+                const filteredListings = (res.data.listings || [])
+                    .sort((a, b) => b.price - a.price)
+                    .slice(0, 4);
+                setListings(filteredListings);
+                setLoading(false);
+            } catch (err) {
+                console.error('Failed to fetch guest favorites:', err);
+                setError('Failed to load guest favorites. Please try again later.');
+                setLoading(false);
+            }
+        }
+
+        fetchListings();
+    }, []);
+
+    if (loading) {
+        return (
+            <section className="bg-white font-sans py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <p className="text-lg text-gray-600">Loading...</p>
+                </div>
+            </section>
+        );
+    }
+
+    if (error) {
+        return (
+            <section className="bg-white font-sans py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <p className="text-lg text-red-500">{error}</p>
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section className="bg-white font-sans py-12">
@@ -51,19 +57,30 @@ const GuestFavorites = () => {
                     These Nests are highly rated and cherished for their outstanding reviews, reliability, and guest satisfaction.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                    {favorites.map((nest) => (
+                    {listings.map((nest) => (
                         <PropertyCard
                             key={nest.id}
                             id={nest.id}
-                            media={nest.media}
-                            name={nest.name}
-                            rating={nest.rating}
+                            media={
+                                nest.media && nest.media.length > 0
+                                    ? nest.media.map(
+                                        (item) => `https://urbannestbucket.s3.eu-north-1.amazonaws.com/${item.media_url}`
+                                    )
+                                    : ['https://via.placeholder.com/800x600']
+                            }
+                            name={nest.title}
+                            rating="4.5 ★ (100)" // Placeholder; replace with actual rating if API provides
                             description={nest.description}
-                            availability={nest.availability}
+                            availability={nest.is_available ? 'Available' : 'Booked'}
                             price={nest.price}
                         />
                     ))}
                 </div>
+                {listings.length === 0 && (
+                    <p className="mt-8 text-lg text-gray-600 text-center">
+                        No guest favorites available at the moment. Please check back later.
+                    </p>
+                )}
             </div>
         </section>
     );

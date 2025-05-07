@@ -6,14 +6,17 @@ const PropertyCard = ({ id, media, name, rating, description, availability, pric
     const scrollRef = useRef(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(true);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const navigate = useNavigate();
 
     if (!id) {
         console.warn('PropertyCard: Missing id prop for property:', name);
     }
 
+    const images = media && media.length > 0 ? media : ['https://via.placeholder.com/800x600'];
+
     const handleScroll = (direction, e) => {
-        e.stopPropagation(); // Prevent card click when clicking arrows
+        e.stopPropagation();
         if (scrollRef.current) {
             const { scrollLeft, clientWidth, scrollWidth } = scrollRef.current;
             const scrollAmount = clientWidth;
@@ -29,6 +32,10 @@ const PropertyCard = ({ id, media, name, rating, description, availability, pric
 
             setCanScrollLeft(newScrollLeft > 0);
             setCanScrollRight(newScrollLeft < scrollWidth - clientWidth - 1);
+
+            // Calculate new image index
+            const newIndex = Math.round(newScrollLeft / clientWidth);
+            setCurrentImageIndex(newIndex);
         }
     };
 
@@ -39,8 +46,6 @@ const PropertyCard = ({ id, media, name, rating, description, availability, pric
             console.error('Cannot navigate: Property id is undefined');
         }
     };
-
-    const images = media && media.length > 0 ? media : ['https://via.placeholder.com/800x600'];
 
     return (
         <article
@@ -69,23 +74,34 @@ const PropertyCard = ({ id, media, name, rating, description, availability, pric
                         <button
                             onClick={(e) => handleScroll('left', e)}
                             disabled={!canScrollLeft}
-                            className={`absolute left-1 sm:left-2 top-1/2 transform -translate-y-1/2 bg-black text-white p-1.5 sm:p-2 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
+                            className={`hidden sm:block absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-200 text-gray-800 p-2 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors ${
                                 !canScrollLeft ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
                             aria-label="Previous image"
                         >
-                            <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6" />
+                            <ChevronLeft className="h-6 w-6" />
                         </button>
                         <button
                             onClick={(e) => handleScroll('right', e)}
                             disabled={!canScrollRight}
-                            className={`absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 bg-black text-white p-1.5 sm:p-2 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
+                            className={`hidden sm:block absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 text-gray-800 p-2 rounded-full hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors ${
                                 !canScrollRight ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
                             aria-label="Next image"
                         >
-                            <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6" />
+                            <ChevronRight className="h-6 w-6" />
                         </button>
+                        <div className="absolute bottom-2 left-0 right-0 flex justify-center space-x-2">
+                            {images.map((_, index) => (
+                                <span
+                                    key={index}
+                                    className={`h-2 w-2 rounded-full ${
+                                        index === currentImageIndex ? 'bg-gray-600' : 'bg-gray-400'
+                                    }`}
+                                    aria-hidden="true"
+                                />
+                            ))}
+                        </div>
                     </>
                 )}
             </div>

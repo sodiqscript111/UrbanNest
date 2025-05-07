@@ -5,6 +5,7 @@ import UploadFile from "./pages/UploadFile.jsx";
 import Welcome from './pages/Welcome.jsx';
 import ProjectDetails from "./pages/ProjectDetails.jsx";
 import ErrorBoundary from "./component/ErrorBoundary.jsx";
+import SignUp from "./pages/Signup.jsx";
 
 function App() {
     return (
@@ -22,6 +23,7 @@ function App() {
                         </ErrorBoundary>
                     }
                 />
+                <Route path="/signup" element={<SignUp />} />
             </Routes>
         </BrowserRouter>
     );
