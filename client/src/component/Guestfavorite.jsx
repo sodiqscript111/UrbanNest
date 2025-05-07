@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import PropertyCard from './Propertycard.jsx';
+import PropertyCard from '../component/Propertycard.jsx';
 
 const GuestFavorites = () => {
     const [listings, setListings] = useState([]);
