@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '../api/axios.js';
 import PropertyCard from '../component/Propertycard.jsx';
 
 const GuestFavorites = () => {
@@ -10,7 +10,7 @@ const GuestFavorites = () => {
     useEffect(() => {
         async function fetchListings() {
             try {
-                const res = await axios.get('/api/listings');
+                const res = await api.get('/api/listings'); // Changed from axios to api
                 // Filter top 4 listings by price (descending)
                 const filteredListings = (res.data.listings || [])
                     .sort((a, b) => b.price - a.price)
