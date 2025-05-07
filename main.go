@@ -45,7 +45,7 @@ func main() {
 	}
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://urban-nest-gy8nmjfdn-sodiqthecreators-projects.vercel.app", "https://urban-nest-akrmwdbd4-sodiqthecreators-projects.vercel.app/"},
+		AllowOrigins:     []string{"https://urban-nest-gy8nmjfdn-sodiqthecreators-projects.vercel.app", "https://urban-nest-akrmwdbd4-sodiqthecreators-projects.vercel.app/", "https://urban-nest-one.vercel.app/"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
