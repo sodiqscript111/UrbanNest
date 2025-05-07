@@ -1,6 +1,6 @@
 import PropertyCard from "../component/Propertycard.jsx";
 import { useEffect, useState } from "react";
-import api from "./axios"; // Changed from axios to api
+import api from "../api/axios.js"; // Changed from axios to api
 
 export default function Home() {
   const [listings, setListings] = useState([]);
