@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import api from '../api/axios.js';
 import PropertyCard from '../component/Propertycard.jsx';
 
 const BudgetFriendly = () => {
@@ -12,9 +11,16 @@ const BudgetFriendly = () => {
     useEffect(() => {
         async function fetchListings() {
             try {
-                const res = await api.get('/api/listings'); // Changed from axios to api
+                const res = await fetch('https://urbannest-backend.onrender.com/api/listings', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (!res.ok) throw new Error('Failed to fetch');
+                const data = await res.json();
                 // Filter top 4 listings by price (ascending, lowest first)
-                const filteredListings = (res.data.listings || [])
+                const filteredListings = (data.listings || [])
                     .sort((a, b) => a.price - b.price)
                     .slice(0, 4);
                 setListings(filteredListings);
@@ -30,7 +36,7 @@ const BudgetFriendly = () => {
     }, []);
 
     const handleExplore = () => {
-        navigate('/listings'); // Replace with '/listings?filter=budget' if route exists
+        navigate('/listings');
         console.log('Explore budget-friendly nests clicked');
     };
 
@@ -76,7 +82,7 @@ const BudgetFriendly = () => {
                                     : ['https://via.placeholder.com/800x600']
                             }
                             name={nest.title}
-                            rating="4.5 ★ (100)" // Placeholder; replace with actual rating if API provides
+                            rating="4.5 ★ (100)"
                             description={nest.description}
                             availability={nest.is_available ? 'Available' : 'Booked'}
                             price={nest.price}

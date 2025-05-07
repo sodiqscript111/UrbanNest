@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import api from '../api/axios.js';
 import PropertyCard from '../component/Propertycard.jsx';
 
 const GuestFavorites = () => {
@@ -10,9 +9,16 @@ const GuestFavorites = () => {
     useEffect(() => {
         async function fetchListings() {
             try {
-                const res = await api.get('/api/listings'); // Changed from axios to api
+                const res = await fetch('https://urbannest-backend.onrender.com/api/listings', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                if (!res.ok) throw new Error('Failed to fetch');
+                const data = await res.json();
                 // Filter top 4 listings by price (descending)
-                const filteredListings = (res.data.listings || [])
+                const filteredListings = (data.listings || [])
                     .sort((a, b) => b.price - a.price)
                     .slice(0, 4);
                 setListings(filteredListings);
@@ -69,7 +75,7 @@ const GuestFavorites = () => {
                                     : ['https://via.placeholder.com/800x600']
                             }
                             name={nest.title}
-                            rating="4.5 ★ (100)" // Placeholder; replace with actual rating if API provides
+                            rating="4.5 ★ (100)"
                             description={nest.description}
                             availability={nest.is_available ? 'Available' : 'Booked'}
                             price={nest.price}
