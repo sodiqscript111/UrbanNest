@@ -38,7 +38,7 @@ func main() {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174", "https://urban-nest-gy8nmjfdn-sodiqthecreators-projects.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -64,8 +64,12 @@ func main() {
 	authenticated.PUT("/listings/:id", editListing)
 	authenticated.DELETE("/listings/:id", deleteWithId)
 
-	fmt.Println("Server starting on :8080")
-	if err := router.Run(":8080"); err != nil {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	fmt.Printf("Server starting on :%s\n", port)
+	if err := router.Run("0.0.0.0:" + port); err != nil {
 		fmt.Printf("Failed to start server: %v\n", err)
 		os.Exit(1)
 	}

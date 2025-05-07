@@ -4,12 +4,17 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
+	"os"
 )
 
 var DB *sql.DB
 
 func InitDB() error {
-	connStr := "postgres://postgres:password@localhost:5432/urbanest?sslmode=disable"
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		return fmt.Errorf("❌ DATABASE_URL environment variable is not set")
+	}
+
 	var err error
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
@@ -109,7 +114,7 @@ CREATE TABLE IF NOT EXISTS listing_media (
     FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE
 )`
 	if _, err := DB.Exec(createListingMedia); err != nil {
-		return fmt.Errorf("<UNK> Failed to create listing_media table: %v", err)
+		return fmt.Errorf("❌ Failed to create listing_media table: %v", err)
 	}
 	return nil
 }
