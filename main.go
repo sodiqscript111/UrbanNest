@@ -37,8 +37,15 @@ func main() {
 
 	router := gin.Default()
 
+	// Configure trusted proxies (Render's internal network or disable)
+	err = router.SetTrustedProxies([]string{"127.0.0.1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"})
+	if err != nil {
+		fmt.Printf("Failed to set trusted proxies: %v\n", err)
+		os.Exit(1)
+	}
+
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:5174", "https://urban-nest-gy8nmjfdn-sodiqthecreators-projects.vercel.app"},
+		AllowOrigins:     []string{"https://urban-nest-gy8nmjfdn-sodiqthecreators-projects.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},

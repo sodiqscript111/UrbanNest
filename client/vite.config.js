@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://urbannest-backend.onrender.com',
         changeOrigin: true,
         secure: false,
         rewrite: path => path.replace(/^\/api/, ''),
