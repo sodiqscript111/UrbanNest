@@ -64,10 +64,13 @@ export default function Signup() {
             return;
         }
 
+        const fullName = `${formData.firstName} ${formData.lastName}`;
+
         try {
             const res = await axios.post(`${BACKEND_URL}/signup`, {
                 email: formData.email,
                 password: formData.password,
+                full_name: fullName,
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 phone: formData.phone,
