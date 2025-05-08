@@ -6,6 +6,7 @@ import Welcome from './pages/Welcome.jsx';
 import ProjectDetails from "./pages/ProjectDetails.jsx";
 import ErrorBoundary from "./component/ErrorBoundary.jsx";
 import SignUp from "./pages/Signup.jsx";
+import CreateListing from "./pages/CreateListing.jsx";
 
 function App() {
     return (
@@ -13,7 +14,7 @@ function App() {
             <Routes>
                 <Route path="/" element={<Welcome />} />
                 <Route path="/edit/:id" element={<EditProperty />} />
-                <Route path="/upload" element={<UploadFile />} />
+                <Route path="/upload" element={<CreateListing />} />
                 <Route path="/home" element={<Home />} />
                 <Route
                     path="/listing/:id"

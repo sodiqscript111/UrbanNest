@@ -12,6 +12,7 @@ export default function CreateListing() {
     const [error, setError] = useState(null);
 
     const BACKEND_URL = "https://urbannest-ybda.onrender.com";
+    const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNpbWlkdXNvZGlxdEBnbWFpbC5jb20iLCJleHAiOjE3NDY3OTUyOTEsInVzZXJfaWQiOjF9.wWWc1c3RFBadpRC0Q9N9DYpSlHhoNGyPSDjtRWPVTB0";
 
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
@@ -46,11 +47,6 @@ export default function CreateListing() {
             setError(null);
             setUploadMessages({});
 
-            const token = localStorage.getItem("token");
-            if (!token) {
-                throw new Error("Please log in to create a listing.");
-            }
-
             const media = [];
             for (const file of files) {
                 const filename = encodeURIComponent(file.name);
@@ -61,7 +57,7 @@ export default function CreateListing() {
                     `${BACKEND_URL}/api/upload-url?filename=${filename}`,
                     {
                         headers: {
-                            Authorization: `Bearer ${token}`,
+                            Authorization: `Bearer ${TOKEN}`,
                         },
                     }
                 );
@@ -101,7 +97,7 @@ export default function CreateListing() {
             const res = await axios.post(`${BACKEND_URL}/listings`, payload, {
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${TOKEN}`,
                 },
             });
 
