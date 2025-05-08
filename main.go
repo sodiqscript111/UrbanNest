@@ -37,15 +37,21 @@ func main() {
 
 	router := gin.Default()
 
-	// Configure trusted proxies (Render's internal network or disable)
+	// Configure trusted proxies (Render's internal network)
 	err = router.SetTrustedProxies([]string{"127.0.0.1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"})
 	if err != nil {
 		fmt.Printf("Failed to set trusted proxies: %v\n", err)
 		os.Exit(1)
 	}
 
+	// CORS middleware with logging for debugging
+	router.Use(func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		fmt.Printf("Incoming request: Method=%s, Path=%s, Origin=%s\n", c.Request.Method, c.Request.URL.Path, origin)
+		c.Next()
+	})
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://urban-nest-gy8nmjfdn-sodiqthecreators-projects.vercel.app", "https://urban-nest-akrmwdbd4-sodiqthecreators-projects.vercel.app/", "https://urban-nest-one.vercel.app/"},
+		AllowAllOrigins:  true, // Temporary for debugging; revert to specific origins after confirming
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
