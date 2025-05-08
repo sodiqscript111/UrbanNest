@@ -1,8 +1,1 @@
-{
-  "rewrites": [
-    {
-      "source": "/api/listings",
-      "destination": "https://urbannest-ybda.onrender.com/listings"
-    }
-  ]
-}
+{}
