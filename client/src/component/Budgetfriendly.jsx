@@ -10,16 +10,23 @@ const BudgetFriendly = () => {
 
     useEffect(() => {
         async function fetchListings() {
+            const url = 'https://urbannest-ybda.onrender.com/listings';
+            console.log('Fetching Budget-Friendly Nests from:', url);
             try {
-                const res = await fetch('https://urbannest-backend.onrender.com/api/listings', {
+                const res = await fetch(url, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
-                if (!res.ok) throw new Error('Failed to fetch');
+                console.log('Response status:', res.status);
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.log('Response body:', text);
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
                 const data = await res.json();
-                // Filter top 4 listings by price (ascending, lowest first)
+                console.log('Response data:', data);
                 const filteredListings = (data.listings || [])
                     .sort((a, b) => a.price - b.price)
                     .slice(0, 4);
@@ -27,7 +34,7 @@ const BudgetFriendly = () => {
                 setLoading(false);
             } catch (err) {
                 console.error('Failed to fetch budget-friendly nests:', err);
-                setError('Failed to load budget-friendly nests. Please try again later.');
+                setError(`Failed to load budget-friendly nests: ${err.message}`);
                 setLoading(false);
             }
         }

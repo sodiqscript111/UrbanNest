@@ -8,16 +8,23 @@ const GuestFavorites = () => {
 
     useEffect(() => {
         async function fetchListings() {
+            const url = 'https://urbannest-ybda.onrender.com/listings';
+            console.log('Fetching Guest Favorites from:', url);
             try {
-                const res = await fetch('https://urbannest-backend.onrender.com/api/listings', {
+                const res = await fetch(url, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                 });
-                if (!res.ok) throw new Error('Failed to fetch');
+                console.log('Response status:', res.status);
+                if (!res.ok) {
+                    const text = await res.text();
+                    console.log('Response body:', text);
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
                 const data = await res.json();
-                // Filter top 4 listings by price (descending)
+                console.log('Response data:', data);
                 const filteredListings = (data.listings || [])
                     .sort((a, b) => b.price - a.price)
                     .slice(0, 4);
@@ -25,7 +32,7 @@ const GuestFavorites = () => {
                 setLoading(false);
             } catch (err) {
                 console.error('Failed to fetch guest favorites:', err);
-                setError('Failed to load guest favorites. Please try again later.');
+                setError(`Failed to load guest favorites: ${err.message}`);
                 setLoading(false);
             }
         }
