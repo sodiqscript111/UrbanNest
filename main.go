@@ -51,7 +51,7 @@ func main() {
 		c.Next()
 	})
 	router.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true, // Temporary for debugging; revert to specific origins after confirming
+		AllowAllOrigins:  true,
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},

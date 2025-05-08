@@ -31,7 +31,7 @@ const Nav = () => {
                             Nest a Place
                         </NavLink>
                         <NavLink
-                            to="/create-listing"
+                            to="/upload"
                             className={({ isActive }) =>
                                 `text-base font-medium hover:underline ${isActive ? 'underline' : ''}`
                             }
