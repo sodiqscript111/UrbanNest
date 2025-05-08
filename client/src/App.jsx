@@ -6,7 +6,7 @@ import Welcome from './pages/Welcome.jsx';
 import ProjectDetails from "./pages/ProjectDetails.jsx";
 import ErrorBoundary from "./component/ErrorBoundary.jsx";
 import SignUp from "./pages/Signup.jsx";
-import CreateListing from "./pages/CreateListing.jsx";
+import CreateListing from "./pages/Createlisting.jsx";
 
 function App() {
     return (
