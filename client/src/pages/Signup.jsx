@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { debounce } from 'lodash';
 import { useNavigate } from 'react-router-dom';
 import { Lock, User, Phone } from 'lucide-react';
 
@@ -13,43 +12,17 @@ export default function Signup() {
         phone: '',
     });
     const [errors, setErrors] = useState({});
-    const [emailStatus, setEmailStatus] = useState('');
     const navigate = useNavigate();
+
+    const BACKEND_URL = "https://urbannest-ybda.onrender.com";
 
     const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z]{2,})+$/;
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     const phoneRegex = /^\+?[1-9]\d{1,14}$/;
 
-    const verifyEmail = debounce(async (email) => {
-        if (!email || !emailRegex.test(email)) {
-            setEmailStatus('');
-            return;
-        }
-        console.log('Verifying email:', email);
-        console.log('Sending payload:', { email });
-        try {
-            const res = await axios.post('http://localhost:8080/verify-email', { email }, {
-                headers: { 'Content-Type': 'application/json' }
-            });
-            console.log('Verify email response:', res.data);
-            setEmailStatus(res.data.status);
-            setErrors((prev) => ({ ...prev, email: res.data.error || '' }));
-        } catch (err) {
-            const errorMessage = err.response?.data?.error || 'Failed to verify email';
-            console.error('Verify email error:', err.response?.data || err);
-            setEmailStatus('error');
-            setErrors((prev) => ({ ...prev, email: errorMessage }));
-        }
-    }, 500);
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
-        console.log('Email input:', name === 'email' ? value : '');
-
-        if (name === 'email') {
-            verifyEmail(value);
-        }
 
         let error = '';
         if (name === 'email' && value && !emailRegex.test(value)) {
@@ -68,10 +41,6 @@ export default function Signup() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (emailStatus !== 'valid') {
-            setErrors((prev) => ({ ...prev, email: 'Please verify your email' }));
-            return;
-        }
 
         const newErrors = {};
         if (!emailRegex.test(formData.email)) {
@@ -96,7 +65,7 @@ export default function Signup() {
         }
 
         try {
-            const res = await axios.post('http://localhost:8080/signup', {
+            const res = await axios.post(`${BACKEND_URL}/signup`, {
                 email: formData.email,
                 password: formData.password,
                 firstName: formData.firstName,
@@ -104,6 +73,7 @@ export default function Signup() {
                 phone: formData.phone,
             });
             console.log('Signup response:', res.data);
+            localStorage.setItem("token", res.data.token);
             alert('Signup successful! Please log in.');
             navigate('/login');
         } catch (err) {
@@ -118,7 +88,7 @@ export default function Signup() {
             <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
                 <h2 className="text-2xl font-bold mb-6 text-center">Sign Up</h2>
                 <form onSubmit={handleSubmit}>
-                    <div className="mb-4 relative">
+                    <div className="mb-4">
                         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                             Email
                         </label>
@@ -130,22 +100,10 @@ export default function Signup() {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className={`w-full p-2 pl-10 border rounded-md focus:outline-none focus:ring-2 ${
-                                    emailStatus === 'valid'
-                                        ? 'border-green-500 focus:ring-green-500'
-                                        : emailStatus === 'error'
-                                            ? 'border-red-500 focus:ring-red-500'
-                                            : 'border-gray-300 focus:ring-blue-500'
-                                }`}
+                                className="w-full p-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 placeholder="Enter your email"
                                 required
                             />
-                            {emailStatus === 'valid' && (
-                                <span className="absolute right-2 text-green-500">✔</span>
-                            )}
-                            {emailStatus === 'error' && (
-                                <span className="absolute right-2 text-red-500">✖</span>
-                            )}
                         </div>
                         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                     </div>

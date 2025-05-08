@@ -11,6 +11,8 @@ export default function CreateListing() {
     const [uploadMessages, setUploadMessages] = useState({});
     const [error, setError] = useState(null);
 
+    const BACKEND_URL = "https://urbannest-ybda.onrender.com";
+
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
         if (selectedFiles.length > 10) {
@@ -44,7 +46,10 @@ export default function CreateListing() {
             setError(null);
             setUploadMessages({});
 
-            const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJleHAiOjE3NDY3MDczMTksInVzZXJfaWQiOjV9.KrAO94fpjLP1K4nbF-urhHzjm0y_KeNlu22OAyV4UMw"; // Replace with dynamic token
+            const token = localStorage.getItem("token");
+            if (!token) {
+                throw new Error("Please log in to create a listing.");
+            }
 
             const media = [];
             for (const file of files) {
@@ -53,7 +58,12 @@ export default function CreateListing() {
                 console.log(`Requesting presigned URL for ${filename}`);
 
                 const response = await axios.get(
-                    `http://localhost:8080/api/upload-url?filename=${filename}`
+                    `${BACKEND_URL}/api/upload-url?filename=${filename}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
                 );
                 const { url } = response.data;
                 console.log(`Presigned URL: ${url}`);
@@ -62,7 +72,7 @@ export default function CreateListing() {
 
                 const uploadResponse = await axios.put(url, file, {
                     headers: {
-                        "Content-Type": file.type || "application/octet-stream",
+                        "Content-Type": file.type,
                     },
                 });
 
@@ -70,11 +80,11 @@ export default function CreateListing() {
                     throw new Error(`S3 upload failed: Status ${uploadResponse.status}`);
                 }
                 console.log(`Successfully uploaded ${filename} to S3`);
-                setUploadMessages((prev) => ({ ...prev, [filename]: "✅ Upload successful!" }));
+                setUploadMessages((prev) => ({ ...prev, [filename]: "Upload successful!" }));
 
                 media.push({
                     media_url: filename,
-                    media_type: file.type.includes("image") ? "image" : "other",
+                    media_type: file.type,
                 });
             }
 
@@ -86,9 +96,9 @@ export default function CreateListing() {
                 is_available: true,
                 media,
             };
-            console.log("Sending payload to /api/listings:", JSON.stringify(payload, null, 2));
+            console.log("Sending payload to /listings:", JSON.stringify(payload, null, 2));
 
-            const res = await axios.post("/api/listings", payload, {
+            const res = await axios.post(`${BACKEND_URL}/listings`, payload, {
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
@@ -96,7 +106,7 @@ export default function CreateListing() {
             });
 
             console.log("Listing created response:", res.data);
-
+            alert("Listing created successfully!");
             setTitle("");
             setDescription("");
             setPrice("");
