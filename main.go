@@ -24,34 +24,35 @@ import (
 )
 
 func main() {
-	err := db.InitDB()
+
+	err := godotenv.Load()
+	if err != nil {
+		fmt.Printf("No .env file found, relying on system environment variables: %v\n", err)
+	}
+
+	err = db.InitDB()
 	if err != nil {
 		fmt.Printf("Failed to initialize database: %v\n", err)
 		os.Exit(1)
 	}
 
-	err = godotenv.Load()
-	if err != nil {
-		fmt.Printf("Failed to load .env: %v\n", err)
-	}
-
 	router := gin.Default()
 
-	// Configure trusted proxies (Render's internal network)
 	err = router.SetTrustedProxies([]string{"127.0.0.1", "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"})
 	if err != nil {
 		fmt.Printf("Failed to set trusted proxies: %v\n", err)
 		os.Exit(1)
 	}
 
-	// CORS middleware with logging for debugging
 	router.Use(func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
 		fmt.Printf("Incoming request: Method=%s, Path=%s, Origin=%s\n", c.Request.Method, c.Request.URL.Path, origin)
 		c.Next()
+		fmt.Printf("Response headers: %v\n", c.Writer.Header())
 	})
+
 	router.Use(cors.New(cors.Config{
-		AllowAllOrigins:  true,
+		AllowOrigins:     []string{"https://urban-nest-one.vercel.app"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -87,7 +88,6 @@ func main() {
 		os.Exit(1)
 	}
 }
-
 func verifyEmail(c *gin.Context) {
 	body, _ := c.GetRawData()
 	fmt.Printf("Received /verify-email request: Body=%s, Headers=%v\n", string(body), c.Request.Header)
