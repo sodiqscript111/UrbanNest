@@ -61,7 +61,7 @@ const Header = () => {
                         animate="visible"
                     >
                         <img
-                            src="https://i.imgur.com/wD82gGh.jpeg"
+                            src="https://i.imgur.com/jRpocK5.jpeg"
                             alt="Modern apartment in Lagos"
                             className="w-full h-full object-cover rounded-lg"
                             loading="lazy"
