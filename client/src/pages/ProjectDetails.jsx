@@ -1,13 +1,52 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { PaystackButton } from 'react-paystack';
 import { motion } from 'framer-motion';
 
+const SkeletonLoader = () => {
+    return (
+        <motion.div
+            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3 }}
+        >
+            <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6">
+                <div className="h-8 w-8 bg-gray-200 rounded-full mb-4 animate-pulse"></div>
+                <div className="h-6 bg-gray-200 rounded w-3/4 mb-4 animate-pulse"></div>
+                <div className="relative mb-6">
+                    <div className="flex overflow-x-auto space-x-4">
+                        <div className="w-full h-64 sm:h-80 bg-gray-200 rounded-lg flex-shrink-0 animate-pulse"></div>
+                        <div className="w-full h-64 sm:h-80 bg-gray-200 rounded-lg flex-shrink-0 animate-pulse"></div>
+                    </div>
+                </div>
+                <div className="space-y-4">
+                    <div className="h-5 bg-gray-200 rounded w-1/2 mb-4 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded w-full mb-2 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded w-5/6 mb-2 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/4 mb-4 animate-pulse"></div>
+                    <div className="h-5 bg-gray-200 rounded w-1/3 mb-4 animate-pulse"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-4 animate-pulse"></div>
+                    <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
+                        <div className="h-5 bg-gray-200 rounded w-1/2 mb-4 animate-pulse"></div>
+                        <div className="h-10 bg-gray-200 rounded w-full mb-4 animate-pulse"></div>
+                        <div className="h-10 bg-gray-200 rounded w-full mb-4 animate-pulse"></div>
+                        <div className="h-10 bg-gray-200 rounded w-full mb-4 animate-pulse"></div>
+                        <div className="h-10 bg-gray-200 rounded w-full mb-4 animate-pulse"></div>
+                        <div className="h-10 bg-gray-200 rounded w-full animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+        </motion.div>
+    );
+};
+
 const PropertyDetails = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
     const [listing, setListing] = useState(null);
     const [error, setError] = useState(null);
     const [checkIn, setCheckIn] = useState(null);
@@ -27,6 +66,11 @@ const PropertyDetails = () => {
 
     const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_your_test_public_key';
     const customerId = 1; // Hardcoded for testing; replace with auth system
+
+    // Scroll to top on mount or id change
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, [id]);
 
     useEffect(() => {
         async function fetchWithRetry(url, options, retries = 5, delay = 2000) {
@@ -236,27 +280,27 @@ const PropertyDetails = () => {
     // Animation variants
     const imageVariants = {
         hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
     };
 
     const formVariants = {
         hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
     };
 
     const modalVariants = {
         hidden: { opacity: 0, scale: 0.95 },
-        visible: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: 'easeOut' } },
+        visible: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: 'easeOut' } },
     };
 
     const detailsVariants = {
         hidden: { opacity: 0, y: 10 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.2, ease: 'easeOut' } },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4, delay: 0.1, ease: 'easeOut' } },
     };
 
     const messageVariants = {
         hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: { duration: 0.3 } },
+        visible: { opacity: 1, transition: { duration: 0.2 } },
     };
 
     if (error) return (
@@ -269,16 +313,7 @@ const PropertyDetails = () => {
             {error}
         </motion.div>
     );
-    if (!listing) return (
-        <motion.div
-            className="p-4 max-w-7xl mx-auto"
-            variants={messageVariants}
-            initial="hidden"
-            animate="visible"
-        >
-            Loading...
-        </motion.div>
-    );
+    if (!listing) return <SkeletonLoader />;
 
     const images = listing.media && listing.media.length > 0
         ? listing.media.map((item) => `https://urbannestbucket.s3.eu-north-1.amazonaws.com/${item.media_url}`)
@@ -286,15 +321,25 @@ const PropertyDetails = () => {
 
     return (
         <motion.section
-            className="bg-white font-sans py-12"
+            className="bg-white font-sans py-8"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
         >
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8">
+                <div className="bg-white shadow-lg rounded-2xl p-4 sm:p-6">
+                    <motion.button
+                        onClick={() => navigate(-1)}
+                        className="mb-4 bg-black text-white p-2.5 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                        aria-label="Go back"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <ChevronLeft className="h-6 w-6" />
+                    </motion.button>
                     <motion.h1
-                        className="text-2xl sm:text-3xl font-bold text-black mb-4"
+                        className="text-xl sm:text-2xl md:text-3xl font-bold text-black mb-4"
                         variants={detailsVariants}
                         initial="hidden"
                         animate="visible"
@@ -304,7 +349,7 @@ const PropertyDetails = () => {
                     <div className="relative group mb-6">
                         <div
                             ref={scrollRef}
-                            className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory hide-scrollbar"
+                            className="flex overflow-x-auto scroll-smooth snap-x snap-mandatory hide-scrollbar touch-pan-x"
                             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                         >
                             {images.map((image, index) => (
@@ -312,7 +357,7 @@ const PropertyDetails = () => {
                                     key={index}
                                     src={image}
                                     alt={`${listing.title} - Image ${index + 1}`}
-                                    className="w-full h-80 sm:h-[32rem] object-cover flex-shrink-0 snap-center cursor-pointer hover:scale-102 transition-transform duration-200"
+                                    className="w-full h-64 sm:h-80 md:h-[32rem] object-cover flex-shrink-0 snap-center cursor-pointer hover:scale-102 transition-transform duration-200"
                                     loading="lazy"
                                     onClick={() => openImageModal(image)}
                                     variants={imageVariants}
@@ -327,7 +372,7 @@ const PropertyDetails = () => {
                                 <motion.button
                                     onClick={() => handleScroll('left')}
                                     disabled={!canScrollLeft}
-                                    className={`absolute left-4 sm:left-6 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 sm:p-4 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
+                                    className={`absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 sm:p-3 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
                                         !canScrollLeft ? 'opacity-50 cursor-not-allowed' : ''
                                     }`}
                                     aria-label="Previous image"
@@ -335,12 +380,12 @@ const PropertyDetails = () => {
                                     whileTap={{ scale: 0.9 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <ChevronLeft className="h-8 w-8 sm:h-10 sm:w-10" />
+                                    <ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" />
                                 </motion.button>
                                 <motion.button
                                     onClick={() => handleScroll('right')}
                                     disabled={!canScrollRight}
-                                    className={`absolute right-4 sm:right-6 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 sm:p-4 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
+                                    className={`absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 sm:p-3 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity ${
                                         !canScrollRight ? 'opacity-50 cursor-not-allowed' : ''
                                     }`}
                                     aria-label="Next image"
@@ -348,7 +393,7 @@ const PropertyDetails = () => {
                                     whileTap={{ scale: 0.9 }}
                                     transition={{ duration: 0.2 }}
                                 >
-                                    <ChevronRight className="h-8 w-8 sm:h-10 sm:w-10" />
+                                    <ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" />
                                 </motion.button>
                             </>
                         )}
@@ -361,7 +406,7 @@ const PropertyDetails = () => {
                             initial="hidden"
                             animate="visible"
                         >
-                            <div ref={modalRef} className="relative max-w-5xl w-full p-4">
+                            <div ref={modalRef} className="relative max-w-5xl w-full p-2 sm:p-4">
                                 <motion.button
                                     onClick={() => setSelectedImage(null)}
                                     className="absolute top-2 right-2 bg-black text-white p-2 rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
@@ -381,29 +426,29 @@ const PropertyDetails = () => {
                         </motion.div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                         <motion.div
-                            className="md:col-span-2"
+                            className="md:col-span-2 space-y-4"
                             variants={detailsVariants}
                             initial="hidden"
                             animate="visible"
                         >
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
                                 <h2 className="text-lg sm:text-xl font-bold text-black">{listing.title}</h2>
-                                <span className="text-sm sm:text-base font-medium text-black">4.5 ★ (100)</span>
+                                <span className="text-base sm:text-lg font-medium text-black mt-2 sm:mt-0">4.5 ★ (100)</span>
                             </div>
-                            <p className="text-sm sm:text-base text-gray-500 mb-4">{listing.description}</p>
+                            <p className="text-base sm:text-lg text-gray-500 mb-4">{listing.description}</p>
                             <p
-                                className={`text-sm sm:text-base font-normal mb-4 ${
+                                className={`text-base sm:text-lg font-normal mb-4 ${
                                     listing.is_available ? 'text-green-600' : 'text-red-600'
                                 }`}
                             >
                                 {listing.is_available ? 'Available' : 'Booked'}
                             </p>
-                            <p className="text-base sm:text-lg font-bold text-black mb-4">
+                            <p className="text-lg sm:text-xl font-bold text-black mb-4">
                                 ₦{listing.price.toLocaleString()}/night
                             </p>
-                            <p className="text-sm sm:text-base text-gray-600 mb-4">
+                            <p className="text-base sm:text-lg text-gray-600 mb-4">
                                 Location: {listing.location}
                             </p>
                         </motion.div>
@@ -416,7 +461,7 @@ const PropertyDetails = () => {
                             <form onSubmit={handleBooking} className="space-y-4 bg-gray-50 p-4 sm:p-6 rounded-lg">
                                 <h3 className="text-lg sm:text-xl font-bold text-black mb-4">Book Your Stay</h3>
                                 <div>
-                                    <label htmlFor="email" className="block text-sm font-medium text-black">
+                                    <label htmlFor="email" className="block text-sm sm:text-base font-medium text-black">
                                         Email
                                     </label>
                                     <input
@@ -426,13 +471,14 @@ const PropertyDetails = () => {
                                         value={formData.email}
                                         onChange={handleInputChange}
                                         placeholder="Enter your email"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
+                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-101 transition-all duration-150 text-base sm:text-lg"
                                         aria-label="Email address"
                                         required
+                                        autoFocus={false}
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="name" className="block text-sm font-medium text-black">
+                                    <label htmlFor="name" className="block text-sm sm:text-base font-medium text-black">
                                         Name
                                     </label>
                                     <input
@@ -442,13 +488,14 @@ const PropertyDetails = () => {
                                         value={formData.name}
                                         onChange={handleInputChange}
                                         placeholder="Enter your name"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
+                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-101 transition-all duration-150 text-base sm:text-lg"
                                         aria-label="Full name"
                                         required
+                                        autoFocus={false}
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="phone" className="block text-sm font-medium text-black">
+                                    <label htmlFor="phone" className="block text-sm sm:text-base font-medium text-black">
                                         Phone
                                     </label>
                                     <input
@@ -458,13 +505,14 @@ const PropertyDetails = () => {
                                         value={formData.phone}
                                         onChange={handleInputChange}
                                         placeholder="Enter your phone number (e.g., +2341234567890)"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
+                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-101 transition-all duration-150 text-base sm:text-lg"
                                         aria-label="Phone number"
                                         required
+                                        autoFocus={false}
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="check-in" className="block text-sm font-medium text-black">
+                                    <label htmlFor="check-in" className="block text-sm sm:text-base font-medium text-black">
                                         Check-In
                                     </label>
                                     <DatePicker
@@ -473,12 +521,14 @@ const PropertyDetails = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={new Date()}
                                         placeholderText="Select date"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
+                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-101 transition-all duration-150 text-base sm:text-lg"
                                         aria-label="Check-in date"
+                                        wrapperClassName="w-full"
+                                        popperClassName="z-50"
                                     />
                                 </div>
                                 <div>
-                                    <label htmlFor="check-out" className="block text-sm font-medium text-black">
+                                    <label htmlFor="check-out" className="block text-sm sm:text-base font-medium text-black">
                                         Check-Out
                                     </label>
                                     <DatePicker
@@ -494,13 +544,15 @@ const PropertyDetails = () => {
                                         }}
                                         minDate={checkIn || new Date()}
                                         placeholderText="Select date"
-                                        className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
+                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-101 transition-all duration-150 text-base sm:text-lg"
                                         aria-label="Check-out date"
+                                        wrapperClassName="w-full"
+                                        popperClassName="z-50"
                                     />
                                 </div>
                                 {bookingError && (
                                     <motion.p
-                                        className="text-red-500 text-sm"
+                                        className="text-red-500 text-sm sm:text-base"
                                         variants={messageVariants}
                                         initial="hidden"
                                         animate="visible"
@@ -510,7 +562,7 @@ const PropertyDetails = () => {
                                 )}
                                 {paymentStatus === 'success' && (
                                     <motion.p
-                                        className="text-green-600 text-sm"
+                                        className="text-green-600 text-sm sm:text-base"
                                         variants={messageVariants}
                                         initial="hidden"
                                         animate="visible"
@@ -520,7 +572,7 @@ const PropertyDetails = () => {
                                 )}
                                 {paymentStatus === 'failed' && (
                                     <motion.p
-                                        className="text-red-500 text-sm"
+                                        className="text-red-500 text-sm sm:text-base"
                                         variants={messageVariants}
                                         initial="hidden"
                                         animate="visible"
@@ -534,7 +586,7 @@ const PropertyDetails = () => {
                                     transition={{ duration: 0.2 }}
                                 >
                                     <PaystackButton
-                                        className="w-full py-2 px-4 bg-black text-white font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                                        className="w-full py-3 px-4 bg-black text-white font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 text-base sm:text-lg"
                                         {...paystackProps}
                                     />
                                 </motion.div>
