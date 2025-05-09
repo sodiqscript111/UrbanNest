@@ -34,7 +34,7 @@ export default function Home() {
     }
 
     async function fetchListings() {
-      const url = '/listings';
+      const url = 'https://urbannest-ybda.onrender.com/listings';
       try {
         const data = await fetchWithRetry(
             url,
