@@ -1,6 +1,5 @@
 import PropertyCard from "../component/Propertycard.jsx";
 import { useEffect, useState } from "react";
-import api from "../api/axios.js";
 
 export default function Home() {
   const [listings, setListings] = useState([]);
@@ -8,16 +7,53 @@ export default function Home() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+      for (let i = 0; i < retries; i++) {
+        try {
+          console.log(`Attempt ${i + 1} - Fetching listings from:`, url);
+          const res = await fetch(url, options);
+          console.log('Response status:', res.status);
+          if (!res.ok) {
+            const text = await res.text();
+            console.log('Response body:', text);
+            throw new Error(`HTTP error! status: ${res.status}`);
+          }
+          const data = await res.json();
+          console.log('Response data:', data);
+          return data;
+        } catch (err) {
+          console.error(`Attempt ${i + 1} failed:`, err);
+          if (i < retries - 1) {
+            console.log(`Retrying after ${delay}ms...`);
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          } else {
+            throw err;
+          }
+        }
+      }
+    }
+
     async function fetchListings() {
+      const url = '/listings';
       try {
-        console.log("Fetching listings from:", `${api.defaults.baseURL}/listings`);
-        const res = await api.get("/listings");
-        console.log("Response status:", res.status);
-        console.log("Response data:", res.data);
-        setListings(res.data.listings || []);
+        const data = await fetchWithRetry(
+            url,
+            {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            },
+            3,
+            1000
+        );
+        const filteredListings = (data.listings || [])
+            .sort((a, b) => b.price - a.price)
+            .slice(0, 4);
+        setListings(filteredListings);
       } catch (err) {
-        console.error("Failed to fetch listings:", err);
-        setError(err.response?.data?.error || "Failed to fetch listings");
+        console.error('Failed to fetch listings:', err);
+        setError(`Failed to load listings: ${err.message}`);
       } finally {
         setIsLoading(false);
       }
