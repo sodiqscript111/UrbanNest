@@ -58,7 +58,7 @@ const PropertyDetails = () => {
         async function fetchListing() {
             try {
                 const data = await fetchWithRetry(
-                    `/api/listings/${id}`,
+                    `https://urbannest-ybda.onrender.com/listings/${id}`,
                     {
                         method: 'GET',
                         headers: {
@@ -74,7 +74,7 @@ const PropertyDetails = () => {
                 setListing(data.listing);
             } catch (err) {
                 console.error('Failed to fetch listing:', err.message);
-                setError('Failed to fetch listing details');
+                setError(`Listing not found (ID: ${id})`);
             }
         }
         fetchListing();
@@ -120,12 +120,10 @@ const PropertyDetails = () => {
 
     const calculateTotalAmount = () => {
         if (!checkIn || !checkOut || !listing || !listing.price) {
-            console.warn('Invalid amount calculation inputs:', { checkIn, checkOut, listing });
             return 0;
         }
         const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
         if (nights <= 0 || isNaN(listing.price)) {
-            console.warn('Invalid nights or price:', { nights, price: listing.price });
             return 0;
         }
         const amount = Math.round(nights * listing.price * 100); // Convert to kobo
@@ -135,7 +133,7 @@ const PropertyDetails = () => {
 
     const createBooking = async (reference) => {
         try {
-            const response = await fetch('/api/booking', {
+            const response = await fetch('https://urbannest-ybda.onrender.com/api/booking', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
