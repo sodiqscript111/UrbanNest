@@ -1,175 +1,236 @@
-import { useState } from 'react';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import PropertyCard from "../component/Propertycard.jsx";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search } from "lucide-react";
 
-const Header = () => {
-    const [location, setLocation] = useState('');
-    const [checkIn, setCheckIn] = useState(null);
-    const [checkOut, setCheckOut] = useState(null);
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
-
-    const handleFindNest = () => {
-        navigate('/home');
-    };
-
-    const handleSearch = (e) => {
-        e.preventDefault();
-        if (!location || !checkIn || !checkOut) {
-            setError('Please fill all fields');
-            return;
-        }
-        setError('');
-        const query = {
-            location,
-            checkIn: checkIn ? checkIn.toISOString().split('T')[0] : '',
-            checkOut: checkOut ? checkOut.toISOString().split('T')[0] : '',
-        };
-        console.log('Search query:', query);
-    };
-
-    // Animation variants for form card
-    const cardVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
-    };
-
-    // Animation variants for image
-    const imageVariants = {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: { duration: 0.8, ease: 'easeIn' } },
-    };
-
-    // Animation variants for error message
-    const errorVariants = {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: { duration: 0.3 } },
-    };
-
+const SkeletonLoader = () => {
     return (
-        <header className="bg-white font-sans">
-            <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-                <div className="flex flex-col md:grid md:grid-cols-[1fr_3fr] gap-6 md:gap-8">
-                    {/* Image */}
+        <motion.div
+            className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.4 }}
+        >
+            <div className="h-6 bg-gray-200 rounded w-1/2 mb-6 animate-pulse"></div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {[...Array(4)].map((_, index) => (
                     <motion.div
-                        className="order-1 md:order-2 relative h-64 md:h-[35.2rem]"
-                        variants={imageVariants}
-                        initial="hidden"
-                        animate="visible"
+                        key={index}
+                        className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
                     >
-                        <img
-                            src="https://i.imgur.com/wD82gGh.jpeg"
-                            alt="Modern apartment in Lagos"
-                            className="w-full h-full object-cover rounded-lg"
-                            loading="lazy"
-                        />
+                        <div className="w-full h-44 bg-gray-200"></div>
+                        <div className="p-4">
+                            <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                            <div className="h-5 bg-gray-200 rounded w-1/3"></div>
+                        </div>
                     </motion.div>
-
-                    {/* Card (Search Form) */}
-                    <div className="order-2 md:order-1 relative z-10 md:-mr-12">
-                        <motion.div
-                            className="bg-white shadow-lg rounded-2xl p-6 md:p-14 max-w-full md:max-w-3xl mt-6 md:mt-8 md:scale-105"
-                            variants={cardVariants}
-                            initial="hidden"
-                            animate="visible"
-                        >
-                            <h1 className="text-2xl md:text-3xl font-bold text-black mb-4 md:mb-6">
-                                Find Your Perfect Nest
-                            </h1>
-                            <form onSubmit={handleSearch} className="space-y-4">
-                                <div>
-                                    <label htmlFor="location" className="block text-xs md:text-sm font-medium text-black">
-                                        Location
-                                    </label>
-                                    <input
-                                        type="text"
-                                        id="location"
-                                        value={location}
-                                        onChange={(e) => setLocation(e.target.value)}
-                                        placeholder="e.g., Lagos, Nigeria"
-                                        className="mt-1 w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
-                                        aria-describedby="location-description"
-                                    />
-                                    <p id="location-description" className="text-[0.65rem] md:text-xs text-gray-500 mt-1">
-                                        Enter a city or neighborhood in Lagos.
-                                    </p>
-                                </div>
-                                <div className="flex flex-col md:flex-row md:space-x-4 space-y-4 md:space-y-0">
-                                    <div className="flex-1">
-                                        <label htmlFor="check-in" className="block text-xs md:text-sm font-medium text-black">
-                                            Check-In
-                                        </label>
-                                        <DatePicker
-                                            id="check-in"
-                                            selected={checkIn}
-                                            onChange={(date) => setCheckIn(date)}
-                                            minDate={new Date()}
-                                            placeholderText="Select date"
-                                            className="mt-1 w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
-                                            aria-label="Check-in date"
-                                        />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label htmlFor="check-out" className="block text-xs md:text-sm font-medium text-black">
-                                            Check-Out
-                                        </label>
-                                        <DatePicker
-                                            id="check-out"
-                                            selected={checkOut}
-                                            onChange={(date) => {
-                                                if (checkIn && date < checkIn) {
-                                                    setError('Check-out must be after check-in');
-                                                    return;
-                                                }
-                                                setCheckOut(date);
-                                                setError('');
-                                            }}
-                                            minDate={checkIn || new Date()}
-                                            placeholderText="Select date"
-                                            className="mt-1 w-full px-3 py-1.5 md:py-2 border border-gray-300 rounded-md text-black placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 focus:scale-102 transition-all duration-200"
-                                            aria-label="Check-out date"
-                                        />
-                                    </div>
-                                </div>
-                                {error && (
-                                    <motion.p
-                                        className="text-sm text-red-500"
-                                        variants={errorVariants}
-                                        initial="hidden"
-                                        animate="visible"
-                                    >
-                                        {error}
-                                    </motion.p>
-                                )}
-                                <motion.button
-                                    type="submit"
-                                    className="w-full py-2 px-4 bg-black text-white font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 min-h-[2.5rem]"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    transition={{ duration: 0.2 }}
-                                >
-                                    Search
-                                </motion.button>
-                                <motion.button
-                                    type="button"
-                                    onClick={handleFindNest}
-                                    className="w-full py-2 px-4 bg-black text-white font-medium rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 mt-2 md:mt-4 min-h-[2.5rem]"
-                                    whileHover={{ scale: 1.05 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    transition={{ duration: 0.2 }}
-                                    aria-label="Find your nest"
-                                >
-                                    Find Your Nest
-                                </motion.button>
-                            </form>
-                        </motion.div>
-                    </div>
-                </div>
+                ))}
             </div>
-        </header>
+        </motion.div>
     );
 };
 
-export default Header;
+export default function Home() {
+    const [listings, setListings] = useState([]);
+    const [filteredListings, setFilteredListings] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    // Scroll to top on mount
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    useEffect(() => {
+        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    console.log(`Attempt ${i + 1} - Fetching listings from:`, url);
+                    const res = await fetch(url, options);
+                    console.log('Response status:', res.status);
+                    if (!res.ok) {
+                        const text = await res.text();
+                        console.log('Response body:', text);
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    const data = await res.json();
+                    console.log('Response data:', data);
+                    return data;
+                } catch (err) {
+                    console.error(`Attempt ${i + 1} failed:`, err);
+                    if (i < retries - 1) {
+                        console.log(`Retrying after ${delay}ms...`);
+                        await new Promise((resolve) => setTimeout(resolve, delay));
+                    } else {
+                        throw err;
+                    }
+                }
+            }
+        }
+
+        async function fetchListings() {
+            const url = 'https://urbannest-ybda.onrender.com/listings';
+            try {
+                const data = await fetchWithRetry(
+                    url,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    },
+                    3,
+                    1000
+                );
+                const sortedListings = (data.listings || []).sort((a, b) => b.price - a.price);
+                setListings(sortedListings);
+                setFilteredListings(sortedListings);
+            } catch (err) {
+                console.error('Failed to fetch listings:', err);
+                setError(`Failed to load listings: ${err.message}`);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchListings();
+    }, []);
+
+    // Handle search
+    useEffect(() => {
+        if (searchQuery.trim() === "") {
+            setFilteredListings(listings);
+        } else {
+            const query = searchQuery.toLowerCase();
+            const filtered = listings.filter(
+                (listing) =>
+                    listing.title.toLowerCase().includes(query) ||
+                    listing.location.toLowerCase().includes(query)
+            );
+            setFilteredListings(filtered);
+        }
+    }, [searchQuery, listings]);
+
+    const handleSearchChange = (e) => {
+        setSearchQuery(e.target.value);
+    };
+
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        // Trigger search (already handled by useEffect)
+    };
+
+    if (isLoading) {
+        return <SkeletonLoader />;
+    }
+
+    if (error) {
+        return (
+            <motion.div
+                className="text-red-500 p-4 sm:p-6 max-w-7xl mx-auto bg-white rounded-md shadow-md font-inter"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.4 }}
+            >
+                {error}
+            </motion.div>
+        );
+    }
+
+    return (
+        <div className="bg-gray-100 py-10 sm:py-12 font-inter">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="mb-8 sm:mb-10">
+                    <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight leading-tight">
+                        Discover Your Perfect Stay
+                    </h1>
+                </div>
+                {/* Search Bar */}
+                <motion.form
+                    onSubmit={handleSearchSubmit}
+                    className="mb-6 sm:mb-8 sticky top-0 z-10 bg-gray-100 py-4 -mx-4 px-4"
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                >
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="text"
+                            value={searchQuery}
+                            onChange={handleSearchChange}
+                            placeholder="Search by title or location..."
+                            className="flex-1 px-4 py-3 text-base sm:text-lg text-gray-900 placeholder-gray-500 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all duration-200"
+                            aria-label="Search listings"
+                        />
+                        <motion.button
+                            type="submit"
+                            className="bg-white border border-black text-black font-semibold px-4 py-3 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center gap-2"
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            aria-label="Search"
+                        >
+                            <Search className="h-5 w-5" />
+                            <span className="hidden sm:inline">Search</span>
+                        </motion.button>
+                    </div>
+                </motion.form>
+                <AnimatePresence>
+                    <motion.div
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        {filteredListings.map((listing, index) => (
+                            <motion.div
+                                key={listing.id}
+                                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-200"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, delay: index * 0.1 }}
+                                whileHover={{ scale: 1.03 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                <PropertyCard
+                                    id={listing.id}
+                                    media={
+                                        listing.media && listing.media.length > 0
+                                            ? listing.media.map(
+                                                (item) => `https://urbannestbucket.s3.eu-north-1.amazonaws.com/${item.media_url}`
+                                            )
+                                            : ["https://via.placeholder.com/600x400"]
+                                    }
+                                    name={listing.title}
+                                    rating="4.5 ★ (100)"
+                                    description={listing.description.substring(0, 100) + "..."}
+                                    availability={listing.is_available ? "Available" : "Booked"}
+                                    price={listing.price}
+                                    className="rounded-lg"
+                                />
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </AnimatePresence>
+                {filteredListings.length === 0 && !error && (
+                    <motion.div
+                        className="mt-8 sm:mt-10 text-center text-gray-600 text-base sm:text-lg font-inter"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        <p>No listings match your search. Try a different query.</p>
+                    </motion.div>
+                )}
+            </div>
+        </div>
+    );
+}
