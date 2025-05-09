@@ -12,7 +12,7 @@ export default function CreateListing() {
     const [error, setError] = useState(null);
 
     const BACKEND_URL = "https://urbannest-ybda.onrender.com";
-    const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNpbWlkdXNvZGlxdEBnbWFpbC5jb20iLCJleHAiOjE3NDY3OTUyOTEsInVzZXJfaWQiOjF9.wWWc1c3RFBadpRC0Q9N9DYpSlHhoNGyPSDjtRWPVTB0";
+    const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNpbWlkdXNvZGlxdEBnbWFpbC5jb20iLCJleHAiOjE3NDY4ODIyNTgsInVzZXJfaWQiOjF9.SPUCuvUh_2o9Fa1ki80ptgLkh-xnGP6KqGpE89DE3G4";
 
     const handleFileChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
