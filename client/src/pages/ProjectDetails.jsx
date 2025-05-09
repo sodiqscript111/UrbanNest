@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -30,15 +29,51 @@ const PropertyDetails = () => {
     const customerId = 1; // Hardcoded for testing; replace with auth system
 
     useEffect(() => {
+        async function fetchWithRetry(url, options, retries = 5, delay = 2000) {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    console.log(`Attempt ${i + 1} - Fetching listing from:`, url);
+                    const res = await fetch(url, options);
+                    console.log('Response status:', res.status);
+                    if (!res.ok) {
+                        const text = await res.text();
+                        console.log('Response body:', text);
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    const data = await res.json();
+                    console.log('Response data:', data);
+                    return data;
+                } catch (err) {
+                    console.error(`Attempt ${i + 1} failed:`, err);
+                    if (i < retries - 1) {
+                        console.log(`Retrying after ${delay}ms...`);
+                        await new Promise((resolve) => setTimeout(resolve, delay));
+                    } else {
+                        throw err;
+                    }
+                }
+            }
+        }
+
         async function fetchListing() {
             try {
-                const res = await axios.get(`/api/listings/${id}`);
-                if (!res.data.listing) {
+                const data = await fetchWithRetry(
+                    `/api/listings/${id}`,
+                    {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                    },
+                    5,
+                    2000
+                );
+                if (!data.listing) {
                     throw new Error('Listing not found');
                 }
-                setListing(res.data.listing);
+                setListing(data.listing);
             } catch (err) {
-                console.error('Failed to fetch listing:', err.message, err.response?.data);
+                console.error('Failed to fetch listing:', err.message);
                 setError('Failed to fetch listing details');
             }
         }
@@ -100,21 +135,32 @@ const PropertyDetails = () => {
 
     const createBooking = async (reference) => {
         try {
-            const response = await axios.post('/api/booking', {
-                listing_id: parseInt(id),
-                customer_id: customerId,
-                start_date: checkIn.toISOString().split('T')[0],
-                end_date: checkOut.toISOString().split('T')[0],
-                status: 'confirmed',
-                payment_reference: reference,
+            const response = await fetch('/api/booking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    listing_id: parseInt(id),
+                    customer_id: customerId,
+                    start_date: checkIn.toISOString().split('T')[0],
+                    end_date: checkOut.toISOString().split('T')[0],
+                    status: 'confirmed',
+                    payment_reference: reference,
+                }),
             });
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+            }
+            const data = await response.json();
             setPaymentStatus('success');
             setBookingError('');
-            return response.data.booking;
+            return data.booking;
         } catch (err) {
-            console.error('Failed to create booking:', err.response?.data || err.message);
+            console.error('Failed to create booking:', err.message);
             setPaymentStatus('failed');
-            setBookingError(err.response?.data?.error || 'Failed to create booking');
+            setBookingError(err.message || 'Failed to create booking');
             throw err;
         }
     };
