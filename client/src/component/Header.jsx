@@ -29,24 +29,42 @@ const Header = () => {
             checkOut: checkOut ? checkOut.toISOString().split('T')[0] : '',
         };
         console.log('Search query:', query);
-        // TODO: Navigate to search results with query
         navigate(`/home?location=${encodeURIComponent(location)}&checkIn=${query.checkIn}&checkOut=${query.checkOut}`);
     };
 
     // Animation variants
     const cardVariants = {
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' } },
+        hidden: { opacity: 0, y: 40, scale: 0.95 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: { type: 'spring', stiffness: 100, damping: 15, duration: 0.6 },
+        },
     };
 
     const imageVariants = {
-        hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: { duration: 0.6, ease: 'easeOut' } },
+        hidden: { opacity: 0, scale: 1.1 },
+        visible: {
+            opacity: 1,
+            scale: 1,
+            transition: { type: 'spring', stiffness: 80, damping: 20, duration: 0.8 },
+        },
     };
 
     const errorVariants = {
-        hidden: { opacity: 0, y: -10 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } },
+        hidden: { opacity: 0, y: -20, scale: 0.9 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            transition: { duration: 0.4, ease: 'easeOut' },
+        },
+    };
+
+    const buttonVariants = {
+        hover: { scale: 1.1, rotate: [0, -2, 2, 0], transition: { duration: 0.3, ease: 'easeInOut' } },
+        tap: { scale: 0.9, transition: { duration: 0.3 } },
     };
 
     return (
@@ -55,14 +73,14 @@ const Header = () => {
                 <div className="flex flex-col gap-4 sm:gap-6">
                     {/* Image */}
                     <motion.div
-                        className="relative h-48 sm:h-64 md:h-[32rem]"
+                        className="relative h-60 sm:h-80 md:h-[32rem]"
                         variants={imageVariants}
                         initial="hidden"
                         animate="visible"
                     >
                         <img
                             src="https://i.imgur.com/jRpocK5.jpeg"
-                            alt="Modern apartment in Lagos"
+                            alt="Modern luxury apartment in Lagos"
                             className="w-full h-full object-cover rounded-lg"
                             loading="lazy"
                         />
@@ -89,7 +107,7 @@ const Header = () => {
                                     value={location}
                                     onChange={(e) => setLocation(e.target.value)}
                                     placeholder="e.g., Lagos, Nigeria"
-                                    className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all duration-200"
+                                    className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:border-gray-500 transition-all duration-200"
                                     aria-describedby="location-description"
                                 />
                                 <p id="location-description" className="text-sm text-gray-500 mt-1">
@@ -107,7 +125,7 @@ const Header = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={new Date()}
                                         placeholderText="Select date"
-                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all duration-200"
+                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:border-gray-500 transition-all duration-200"
                                         aria-label="Check-in date"
                                         wrapperClassName="w-full"
                                         popperClassName="z-50"
@@ -130,7 +148,7 @@ const Header = () => {
                                         }}
                                         minDate={checkIn || new Date()}
                                         placeholderText="Select date"
-                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-all duration-200"
+                                        className="mt-1 w-full px-4 py-3 border border-gray-300 rounded-md text-base text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:border-gray-500 transition-all duration-200"
                                         aria-label="Check-out date"
                                         wrapperClassName="w-full"
                                         popperClassName="z-50"
@@ -149,10 +167,10 @@ const Header = () => {
                             )}
                             <motion.button
                                 type="submit"
-                                className="w-full bg-white border border-black text-black font-semibold py-3 px-4 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 flex items-center justify-center gap-2"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                transition={{ duration: 0.2 }}
+                                className="w-full bg-white border border-black text-black font-semibold py-3 px-4 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center justify-center gap-2"
+                                variants={buttonVariants}
+                                whileHover="hover"
+                                whileTap="tap"
                                 aria-label="Search for listings"
                             >
                                 <Search className="h-5 w-5" />
@@ -161,10 +179,10 @@ const Header = () => {
                             <motion.button
                                 type="button"
                                 onClick={handleFindNest}
-                                className="w-full bg-black text-white font-semibold py-3 px-4 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                transition={{ duration: 0.2 }}
+                                className="w-full bg-black text-white font-semibold py-3 px-4 rounded-md hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                                variants={buttonVariants}
+                                whileHover="hover"
+                                whileTap="tap"
                                 aria-label="Find your nest"
                             >
                                 Find Your Nest

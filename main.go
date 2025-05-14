@@ -52,7 +52,12 @@ func main() {
 	})
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"https://urban-nest-one.vercel.app"},
+		AllowOrigins: []string{
+			"http://localhost:3000",                   // Local development for Web
+			"http://192.168.x.x:3000",                 // Local IP address if testing from device
+			"https://urban-nest-one.vercel.app",       // Web domain
+			"http://your-react-native-app-domain.com", // React Native app domain (if applicable)
+		},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
