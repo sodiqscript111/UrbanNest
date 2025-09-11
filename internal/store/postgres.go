@@ -20,6 +20,6 @@ func NewPostgresStore(config *config.Config) (*PostgresStore, error) {
 		return nil, err
 	}
 
-	db.AutoMigrate(&entities.User{}, &entities.Listing{}, &entities.Booking{}, &entities.Review{}, &entities.Message{})
+	db.AutoMigrate(&entities.User{}, &entities.Listing{}, &entities.Booking{}, &entities.Review{}, &entities.Message{}, &entities.BookedDates{})
 	return &PostgresStore{DB: db}, nil
 }

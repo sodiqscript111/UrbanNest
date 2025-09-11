@@ -1,17 +1,31 @@
 package email
 
 import (
+	"context"
 	"github.com/resend/resend-go/v2"
 )
 
-func SendEmail(apiKey, to, subject, message string) error {
-	client := resend.NewClient(apiKey)
-	params := &resend.SendEmailRequest{
-		From:    "no-reply@yourdomain.com",
-		To:      []string{to},
-		Subject: subject,
-		Text:    message,
+type EmailParams struct {
+	To      string
+	Subject string
+	Body    string
+}
+
+type ResendClient struct {
+	client *resend.Client
+}
+
+func NewResendClient(apiKey string) *ResendClient {
+	return &ResendClient{client: resend.NewClient(apiKey)}
+}
+
+func (c *ResendClient) SendEmail(ctx context.Context, params EmailParams) error {
+	email := &resend.SendEmailRequest{
+		From:    "no-reply@urban-nest.com",
+		To:      []string{params.To},
+		Subject: params.Subject,
+		Html:    params.Body, // Use Html for rich text; adjust if plain text is preferred
 	}
-	_, err := client.Emails.Send(params)
+	_, err := c.client.Emails.SendWithContext(ctx, email)
 	return err
 }

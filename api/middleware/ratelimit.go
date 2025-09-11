@@ -1,27 +1,48 @@
 package middleware
 
 import (
-	"UrbanNest/pkg/redis"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"net/http"
 	"time"
 )
 
-func RateLimit(client *redis.RedisClient) gin.HandlerFunc {
+func RateLimit(client *redis.Client) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		ctx := c.Request.Context()
 		key := "ratelimit:" + c.ClientIP()
-		count, err := client.Client.Incr(c, key).Result()
+
+		// Get current request count
+		count, err := client.Get(ctx, key).Int()
+		if err != nil && err != redis.Nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "rate limit error"})
+			c.Abort()
+			return
+		}
+
+		// Set limit (e.g., 100 requests per minute)
+		limit := 100
+		window := time.Minute
+
+		if count >= limit {
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "rate limit exceeded"})
+			c.Abort()
+			return
+		}
+
+		// Increment count and set expiry if first request
+		pipe := client.Pipeline()
+		pipe.Incr(ctx, key)
+		if count == 0 {
+			pipe.Expire(ctx, key, window)
+		}
+		_, err = pipe.Exec(ctx)
 		if err != nil {
-			c.AbortWithStatus(http.StatusInternalServerError)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "rate limit error"})
+			c.Abort()
 			return
 		}
-		if count == 1 {
-			client.Client.Expire(c, key, time.Minute)
-		}
-		if count > 10 { // 10 requests per minute
-			c.AbortWithStatus(http.StatusTooManyRequests)
-			return
-		}
+
 		c.Next()
 	}
 }

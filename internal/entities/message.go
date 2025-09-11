@@ -1,11 +1,15 @@
 package entities
 
-import "time"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type Message struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
+	gorm.Model
 	SenderID   uint      `json:"sender_id"`
 	ReceiverID uint      `json:"receiver_id"`
+	ListingID  uint      `json:"listing_id"` // Optional: Tie message to a listing
 	Content    string    `json:"content"`
-	CreatedAt  time.Time `json:"created_at"`
+	SentAt     time.Time `json:"sent_at"`
 }

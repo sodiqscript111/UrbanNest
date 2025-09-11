@@ -1,39 +1,40 @@
 package config
 
-import (
-	"github.com/joho/godotenv"
-	"log"
-	"os"
-)
+import "os"
 
 type Config struct {
+	Port          string
 	DBHost        string
-	DBPort        string
 	DBUser        string
 	DBPassword    string
 	DBName        string
+	DBPort        string
 	KafkaBrokers  string
 	RedisAddr     string
 	RedisPassword string
 	ResendAPIKey  string
-	Port          string
+	JWTSecret     string
 }
 
 func LoadConfig() *Config {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	return &Config{
-		DBHost:        os.Getenv("DB_HOST"),
-		DBPort:        os.Getenv("DB_PORT"),
-		DBUser:        os.Getenv("DB_USER"),
-		DBPassword:    os.Getenv("DB_PASSWORD"),
-		DBName:        os.Getenv("DB_NAME"),
-		KafkaBrokers:  os.Getenv("KAFKA_BROKERS"),
-		RedisAddr:     os.Getenv("REDIS_ADDR"),
-		RedisPassword: os.Getenv("REDIS_PASSWORD"),
-		ResendAPIKey:  os.Getenv("RESEND_API_KEY"),
-		Port:          os.Getenv("PORT"),
+		Port:          getEnv("PORT", "8080"),
+		DBHost:        getEnv("DB_HOST", "localhost"),
+		DBUser:        getEnv("DB_USER", "user"),
+		DBPassword:    getEnv("DB_PASSWORD", "password"),
+		DBName:        getEnv("DB_NAME", "airbnb"),
+		DBPort:        getEnv("DB_PORT", "5432"),
+		KafkaBrokers:  getEnv("KAFKA_BROKERS", "localhost:9092"),
+		RedisAddr:     getEnv("REDIS_ADDR", "localhost:6379"),
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		ResendAPIKey:  getEnv("RESEND_API_KEY", ""),
+		JWTSecret:     getEnv("JWT_SECRET", "your-secret-key"),
 	}
+}
+
+func getEnv(key, defaultVal string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultVal
 }

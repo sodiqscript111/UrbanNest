@@ -1,10 +1,7 @@
 package kafka
 
 import (
-	"UrbanNest/internal/entities"
-	"UrbanNest/internal/store"
 	"context"
-	"encoding/json"
 	"github.com/segmentio/kafka-go"
 	"log"
 )
@@ -38,19 +35,4 @@ func (c *Consumer) Consume(ctx context.Context, handler func(message kafka.Messa
 
 func (c *Consumer) Close() error {
 	return c.Reader.Close()
-}
-
-func StartBookingConsumer(brokers []string, db *store.PostgresStore) {
-	consumer := NewConsumer(brokers, "booking.created", "booking-group")
-	ctx := context.Background()
-
-	consumer.Consume(ctx, func(msg kafka.Message) {
-		var booking entities.Booking
-		if err := json.Unmarshal(msg.Value, &booking); err != nil {
-			log.Printf("Error unmarshaling booking: %v", err)
-			return
-		}
-		// Example: Update listing availability
-		log.Printf("Processed booking for listing %d", booking.ListingID)
-	})
 }
