@@ -74,13 +74,11 @@ func (s *BookingService) GetBooking(ctx context.Context, id uint) (*entities.Boo
 		}
 	}
 
-	// Fallback to PostgreSQL
 	var booking entities.Booking
 	if err := s.db.DB.First(&booking, id).Error; err != nil {
 		return nil, fmt.Errorf("booking not found")
 	}
 
-	// Cache in Redis
 	if s.redis != nil {
 		if err := s.redis.CacheBooking(ctx, &booking); err != nil {
 			return nil, err
@@ -97,7 +95,6 @@ func (s *BookingService) GetBookingsByUser(ctx context.Context, userID uint) ([]
 		return nil, fmt.Errorf("user not found")
 	}
 
-	// Try Redis cache
 	if s.redis != nil {
 		bookings, err := s.redis.GetBookingsByUser(ctx, userID)
 		if err == nil && len(bookings) > 0 {
@@ -105,13 +102,11 @@ func (s *BookingService) GetBookingsByUser(ctx context.Context, userID uint) ([]
 		}
 	}
 
-	// Fallback to PostgreSQL
 	var bookings []entities.Booking
 	if err := s.db.DB.Where("user_id = ?", userID).Find(&bookings).Error; err != nil {
 		return nil, err
 	}
 
-	// Cache in Redis
 	if s.redis != nil {
 		if err := s.redis.CacheBookingsByUser(ctx, userID, bookings); err != nil {
 			return nil, err
@@ -122,13 +117,12 @@ func (s *BookingService) GetBookingsByUser(ctx context.Context, userID uint) ([]
 }
 
 func (s *BookingService) GetBookingsByHost(ctx context.Context, hostID uint) ([]entities.Booking, error) {
-	// Check if host exists
+
 	var host entities.User
 	if err := s.db.DB.First(&host, hostID).Error; err != nil {
 		return nil, fmt.Errorf("host not found")
 	}
 
-	// Try Redis cache
 	if s.redis != nil {
 		bookings, err := s.redis.GetBookingsByHost(ctx, hostID)
 		if err == nil && len(bookings) > 0 {
@@ -136,14 +130,12 @@ func (s *BookingService) GetBookingsByHost(ctx context.Context, hostID uint) ([]
 		}
 	}
 
-	// Fallback to PostgreSQL
 	var bookings []entities.Booking
 	if err := s.db.DB.Joins("JOIN listings ON listings.id = bookings.listing_id").
 		Where("listings.host_id = ?", hostID).Find(&bookings).Error; err != nil {
 		return nil, err
 	}
 
-	// Cache in Redis
 	if s.redis != nil {
 		if err := s.redis.CacheBookingsByHost(ctx, hostID, bookings); err != nil {
 			return nil, err
@@ -159,24 +151,20 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uint) error {
 		return fmt.Errorf("booking not found")
 	}
 
-	// Check if booking is already canceled
 	if booking.Status == "canceled" {
 		return fmt.Errorf("booking is already canceled")
 	}
 
-	// Update status to canceled
 	booking.Status = "canceled"
 	if err := s.db.DB.Save(&booking).Error; err != nil {
 		return err
 	}
 
-	// Remove from BookedDates
 	if err := s.db.DB.Where("listing_id = ? AND start_date = ? AND end_date = ?",
 		booking.ListingID, booking.StartDate, booking.EndDate).Delete(&entities.BookedDates{}).Error; err != nil {
 		return err
 	}
 
-	// Invalidate caches
 	if s.redis != nil {
 		if err := s.redis.Client.Del(ctx, fmt.Sprintf("booking:%d", booking.ID)).Err(); err != nil {
 			return err
@@ -192,6 +180,5 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uint) error {
 		}
 	}
 
-	// Publish booking cancellation event
 	return s.producer.PublishMessage(ctx, "booking.canceled", booking)
 }

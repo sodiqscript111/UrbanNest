@@ -82,13 +82,13 @@ func main() {
 			kafka.StartEmailConsumer(strings.Split(config.KafkaBrokers, ","), config.ResendAPIKey)
 		case "booking":
 			log.Println("Starting booking consumer")
-			kafka.StartBookingConsumer(strings.Split(config.KafkaBrokers, ","), d, config.ResendAPIKey)
+			kafka.StartBookingConsumer(strings.Split(config.KafkaBrokers, ","), database, config.ResendAPIKey)
 		case "listing":
 			log.Println("Starting listing consumer")
-			kafka.StartListingConsumer(strings.Split(config.KafkaBrokers, ","), d)
+			kafka.StartListingConsumer(strings.Split(config.KafkaBrokers, ","), database)
 		case "message":
 			log.Println("Starting message consumer")
-			kafka.StartMessageConsumer(strings.Split(config.KafkaBrokers, ","), d, config.ResendAPIKey)
+			kafka.StartMessageConsumer(strings.Split(config.KafkaBrokers, ","), database, config.ResendAPIKey)
 		default:
 			log.Fatal("Invalid consumer type")
 		}

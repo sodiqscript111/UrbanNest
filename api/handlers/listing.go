@@ -30,7 +30,7 @@ func CreateListing(db interfaces.Database, redis *store.RedisStore, producer *ka
 	}
 }
 
-func GetListing(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -48,7 +48,7 @@ func GetListing(db *store.PostgresStore, redis *store.RedisStore, producer *kafk
 	}
 }
 
-func UpdateListing(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func UpdateListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -72,7 +72,7 @@ func UpdateListing(db *store.PostgresStore, redis *store.RedisStore, producer *k
 	}
 }
 
-func DeleteListing(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func DeleteListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -90,7 +90,7 @@ func DeleteListing(db *store.PostgresStore, redis *store.RedisStore, producer *k
 	}
 }
 
-func CheckAvailability(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func CheckAvailability(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -122,7 +122,6 @@ func CheckAvailability(db *store.PostgresStore, redis *store.RedisStore, produce
 	}
 }
 
-// Helper to parse ID (used in GetListing, UpdateListing, DeleteListing)
 func parseID(idStr string) uint {
 	id, _ := strconv.ParseUint(idStr, 10, 32)
 	return uint(id)

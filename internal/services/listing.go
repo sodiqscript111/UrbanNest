@@ -16,7 +16,7 @@ type ListingService struct {
 	producer *kafka.Producer
 }
 
-func NewListingService(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) *ListingService {
+func NewListingService(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) *ListingService {
 	return &ListingService{db, redis, producer}
 }
 
