@@ -3,6 +3,7 @@ package main
 import (
 	"UrbanNest/api/handlers"
 	"UrbanNest/api/middleware"
+	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/store"
 	"UrbanNest/pkg/config"
 	"UrbanNest/pkg/kafka"
@@ -22,6 +23,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	var database interfaces.Database = db
 	redisStore := store.NewRedisStore(config.RedisAddr, config.RedisPassword)
 
 	if *mode == "server" {
@@ -38,39 +40,39 @@ func main() {
 		r.Use(middleware.RateLimit(redisStore.Client))
 
 		// Auth routes (public)
-		r.POST("/register", handlers.Register(db, config.JWTSecret))
-		r.POST("/login", handlers.Login(db, config.JWTSecret))
+		r.POST("/register", handlers.Register(database, config.JWTSecret))
+		r.POST("/login", handlers.Login(database, config.JWTSecret))
 
 		// Protected routes
 		protected := r.Group("/", middleware.Auth(config.JWTSecret))
 		{
 			// User routes
-			protected.POST("/users", handlers.CreateUser(db, nil))
-			protected.GET("/users/:id", handlers.GetUser(db, nil))
+			protected.POST("/users", handlers.CreateUser(database, nil))
+			protected.GET("/users/:id", handlers.GetUser(database, nil))
 
 			// Listing routes
-			protected.POST("/listings", handlers.CreateListing(db, redisStore, listingProducer))
-			protected.GET("/listings/:id", handlers.GetListing(db, redisStore, listingProducer))
-			protected.PUT("/listings/:id", handlers.UpdateListing(db, redisStore, listingProducer))
-			protected.DELETE("/listings/:id", handlers.DeleteListing(db, redisStore, listingProducer))
-			protected.GET("/listings/:id/availability", handlers.CheckAvailability(db, redisStore, listingProducer))
+			protected.POST("/listings", handlers.CreateListing(database, redisStore, listingProducer))
+			protected.GET("/listings/:id", handlers.GetListing(database, redisStore, listingProducer))
+			protected.PUT("/listings/:id", handlers.UpdateListing(database, redisStore, listingProducer))
+			protected.DELETE("/listings/:id", handlers.DeleteListing(database, redisStore, listingProducer))
+			protected.GET("/listings/:id/availability", handlers.CheckAvailability(database, redisStore, listingProducer))
 
 			// Review routes
-			protected.POST("/reviews", handlers.CreateReview(db, redisStore, reviewProducer))
-			protected.GET("/reviews/:id", handlers.GetReview(db, redisStore, reviewProducer))
-			protected.GET("/listings/:id/reviews", handlers.GetReviewsByListing(db, redisStore, reviewProducer))
+			protected.POST("/reviews", handlers.CreateReview(database, redisStore, reviewProducer))
+			protected.GET("/reviews/:id", handlers.GetReview(database, redisStore, reviewProducer))
+			protected.GET("/listings/:id/reviews", handlers.GetReviewsByListing(database, redisStore, reviewProducer))
 
 			// Message routes
-			protected.POST("/messages", handlers.CreateMessage(db, redisStore, messageProducer))
-			protected.GET("/messages/:id", handlers.GetMessage(db, redisStore, messageProducer))
-			protected.GET("/users/:id/messages", handlers.GetMessagesByUser(db, redisStore, messageProducer))
+			protected.POST("/messages", handlers.CreateMessage(database, redisStore, messageProducer))
+			protected.GET("/messages/:id", handlers.GetMessage(database, redisStore, messageProducer))
+			protected.GET("/users/:id/messages", handlers.GetMessagesByUser(database, redisStore, messageProducer))
 
 			// Booking routes
-			protected.POST("/bookings", handlers.CreateBooking(db, bookingProducer))
-			protected.GET("/bookings/:id", handlers.GetBooking(db, redisStore, bookingProducer))
-			protected.GET("/users/:id/bookings", handlers.GetBookingsByUser(db, redisStore, bookingProducer))
-			protected.GET("/hosts/:id/bookings", handlers.GetBookingsByHost(db, redisStore, bookingProducer))
-			protected.DELETE("/bookings/:id", handlers.CancelBooking(db, redisStore, bookingProducer))
+			protected.POST("/bookings", handlers.CreateBooking(database, bookingProducer))
+			protected.GET("/bookings/:id", handlers.GetBooking(database, redisStore, bookingProducer))
+			protected.GET("/users/:id/bookings", handlers.GetBookingsByUser(database, redisStore, bookingProducer))
+			protected.GET("/hosts/:id/bookings", handlers.GetBookingsByHost(database, redisStore, bookingProducer))
+			protected.DELETE("/bookings/:id", handlers.CancelBooking(database, redisStore, bookingProducer))
 		}
 
 		r.Run(":" + config.Port)
@@ -80,13 +82,13 @@ func main() {
 			kafka.StartEmailConsumer(strings.Split(config.KafkaBrokers, ","), config.ResendAPIKey)
 		case "booking":
 			log.Println("Starting booking consumer")
-			kafka.StartBookingConsumer(strings.Split(config.KafkaBrokers, ","), db, config.ResendAPIKey)
+			kafka.StartBookingConsumer(strings.Split(config.KafkaBrokers, ","), d, config.ResendAPIKey)
 		case "listing":
 			log.Println("Starting listing consumer")
-			kafka.StartListingConsumer(strings.Split(config.KafkaBrokers, ","), db)
+			kafka.StartListingConsumer(strings.Split(config.KafkaBrokers, ","), d)
 		case "message":
 			log.Println("Starting message consumer")
-			kafka.StartMessageConsumer(strings.Split(config.KafkaBrokers, ","), db, config.ResendAPIKey)
+			kafka.StartMessageConsumer(strings.Split(config.KafkaBrokers, ","), d, config.ResendAPIKey)
 		default:
 			log.Fatal("Invalid consumer type")
 		}

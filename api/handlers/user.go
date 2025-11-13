@@ -2,15 +2,14 @@ package handlers
 
 import (
 	"UrbanNest/internal/entities"
+	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/services"
-	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-func CreateUser(db *store.PostgresStore, producer *kafka.Producer) gin.HandlerFunc {
+func CreateUser(db interfaces.Database, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var user entities.User
 		if err := c.ShouldBindJSON(&user); err != nil {
@@ -28,7 +27,7 @@ func CreateUser(db *store.PostgresStore, producer *kafka.Producer) gin.HandlerFu
 	}
 }
 
-func GetUser(db *store.PostgresStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetUser(db interfaces.Database, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		service := services.NewUserService(db, producer)
@@ -39,11 +38,4 @@ func GetUser(db *store.PostgresStore, producer *kafka.Producer) gin.HandlerFunc 
 		}
 		c.JSON(http.StatusOK, user)
 	}
-}
-
-// Helper to parse ID (add error handling as needed)
-func parseID(idStr string) uint {
-	var id uint
-	_, _ = fmt.Sscanf(idStr, "%d", &id)
-	return id
 }

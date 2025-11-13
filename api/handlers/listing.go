@@ -2,17 +2,17 @@ package handlers
 
 import (
 	"UrbanNest/internal/entities"
+	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/services"
 	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-func CreateListing(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func CreateListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var listing entities.Listing
 		if err := c.ShouldBindJSON(&listing); err != nil {
