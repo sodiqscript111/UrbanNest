@@ -2,6 +2,7 @@ package services
 
 import (
 	"UrbanNest/internal/entities"
+	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
 	"context"
@@ -10,58 +11,55 @@ import (
 )
 
 type BookingService struct {
-	db       *store.PostgresStore
+	db       interfaces.Database
 	redis    *store.RedisStore
 	producer *kafka.Producer
 }
 
-func NewBookingService(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) *BookingService {
+func NewBookingService(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) *BookingService {
 	return &BookingService{db, redis, producer}
 }
-
 func (s *BookingService) CreateBooking(ctx context.Context, booking *entities.Booking) error {
-	// Validate booking dates
+	// Validate
 	if booking.StartDate.After(booking.EndDate) || booking.StartDate.Before(time.Now()) {
 		return fmt.Errorf("invalid date range")
 	}
 
-	// Check if user and listing exist
-	var user entities.User
-	if err := s.db.DB.First(&user, booking.UserID).Error; err != nil {
+	// Check user
+	if _, err := s.db.GetUser(ctx, booking.UserID); err != nil {
 		return fmt.Errorf("user not found")
 	}
-	var listing entities.Listing
-	if err := s.db.DB.First(&listing, booking.ListingID).Error; err != nil {
+
+	// Check listing
+	if _, err := s.db.GetListing(ctx, booking.ListingID); err != nil {
 		return fmt.Errorf("listing not found")
 	}
 
-	// Check for availability conflicts
-	var conflictingBookings []entities.BookedDates
-	if err := s.db.DB.Where("listing_id = ? AND (start_date <= ? AND end_date >= ?)",
-		booking.ListingID, booking.EndDate, booking.StartDate).Find(&conflictingBookings).Error; err != nil {
+	// Check conflicts
+	conflicts, err := s.db.FindConflictingBookings(ctx, booking.ListingID, booking.StartDate, booking.EndDate)
+	if err != nil {
 		return err
 	}
-	if len(conflictingBookings) > 0 {
-		return fmt.Errorf("listing is not available for the selected dates")
+	if len(conflicts) > 0 {
+		return fmt.Errorf("listing is not available for selected dates")
 	}
 
-	// Set default status
+	// Default
 	booking.Status = "pending"
 
-	// Create booking
-	tx := s.db.DB.Create(booking)
-	if err := tx.Error; err != nil {
+	// Save
+	if err := s.db.CreateBooking(ctx, booking); err != nil {
 		return err
 	}
 
-	// Cache booking in Redis
+	// Redis
 	if s.redis != nil {
 		if err := s.redis.CacheBooking(ctx, booking); err != nil {
 			return err
 		}
 	}
 
-	// Publish booking creation event
+	// Kafka
 	return s.producer.PublishMessage(ctx, "booking.created", booking)
 }
 
@@ -74,43 +72,43 @@ func (s *BookingService) GetBooking(ctx context.Context, id uint) (*entities.Boo
 		}
 	}
 
-	var booking entities.Booking
-	if err := s.db.DB.First(&booking, id).Error; err != nil {
-		return nil, fmt.Errorf("booking not found")
+	// Fetch from DB
+	booking, err := s.db.GetBooking(ctx, id)
+	if err != nil {
+		return nil, err
 	}
+	return booking, nil
 
+	// Cache in Redis
 	if s.redis != nil {
-		if err := s.redis.CacheBooking(ctx, &booking); err != nil {
+		if err := s.redis.CacheBooking(ctx, booking); err != nil {
 			return nil, err
 		}
 	}
 
-	return &booking, nil
+	return booking, nil
 }
-
 func (s *BookingService) GetBookingsByUser(ctx context.Context, userID uint) ([]entities.Booking, error) {
-	// Check if user exists
-	var user entities.User
-	if err := s.db.DB.First(&user, userID).Error; err != nil {
+	if _, err := s.db.GetUser(ctx, userID); err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
 
+	// Try Redis
 	if s.redis != nil {
-		bookings, err := s.redis.GetBookingsByUser(ctx, userID)
-		if err == nil && len(bookings) > 0 {
+		if bookings, err := s.redis.GetBookingsByUser(ctx, userID); err == nil && len(bookings) > 0 {
 			return bookings, nil
 		}
 	}
 
-	var bookings []entities.Booking
-	if err := s.db.DB.Where("user_id = ?", userID).Find(&bookings).Error; err != nil {
+	// DB
+	bookings, err := s.db.GetBookingsByUser(ctx, userID)
+	if err != nil {
 		return nil, err
 	}
 
+	// Cache
 	if s.redis != nil {
-		if err := s.redis.CacheBookingsByUser(ctx, userID, bookings); err != nil {
-			return nil, err
-		}
+		_ = s.redis.CacheBookingsByUser(ctx, userID, bookings)
 	}
 
 	return bookings, nil

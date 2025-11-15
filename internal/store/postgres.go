@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"time"
 )
 
 type PostgresStore struct {
@@ -64,4 +65,47 @@ func (p *PostgresStore) GetUser(ctx context.Context, id uint) (*entities.User, e
 		return nil, err
 	}
 	return &u, nil
+}
+
+func (p *PostgresStore) CreateBooking(ctx context.Context, booking *entities.Booking) error {
+	return p.DB.Create(booking).Error
+}
+
+func (p *PostgresStore) GetBooking(ctx context.Context, id uint) (*entities.Booking, error) {
+	var b entities.Booking
+	if err := p.DB.First(&b, id).Error; err != nil {
+		return nil, err
+	}
+	return &b, nil
+}
+func (p *PostgresStore) GetBookingsByUser(ctx context.Context, userID uint) ([]entities.Booking, error) {
+	var bookings []entities.Booking
+	if err := p.DB.Where("user_id = ?", userID).Find(&bookings).Error; err != nil {
+		return nil, err
+	}
+	return bookings, nil
+}
+func (p *PostgresStore) GetBookingsByHost(ctx context.Context, hostID uint) ([]entities.Booking, error) {
+	var bookings []entities.Booking
+	if err := p.DB.Joins("JOIN listings ON listings.id = bookings.listing_id").
+		Where("listings.host_id = ?", hostID).Find(&bookings).Error; err != nil {
+		return nil, err
+	}
+	return bookings, nil
+}
+
+func (p *PostgresStore) UpdateBooking(ctx context.Context, booking *entities.Booking) error {
+	return p.DB.Save(booking).Error
+}
+func (p *PostgresStore) DeleteBooking(ctx context.Context, bookingID uint) error {
+	return p.DB.Delete(&entities.Booking{}, bookingID).Error
+}
+
+func (p *PostgresStore) FindConflictingBookings(ctx context.Context, listingID uint, start, end time.Time) ([]entities.BookedDates, error) {
+	var bookings []entities.BookedDates
+	err := p.DB.
+		Where("listing_id = ? AND (start_date <= ? AND end_date >= ?)",
+			listingID, end, start).
+		Find(&bookings).Error
+	return bookings, err
 }
