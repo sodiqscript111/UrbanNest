@@ -135,3 +135,39 @@ func (p *PostgresStore) GetReviewsByListing(ctx context.Context, listingID uint)
 	}
 	return reviews, nil
 }
+
+func (p *PostgresStore) CreateMessage(ctx context.Context, message *entities.Message) error {
+	return p.DB.Create(message).Error
+}
+
+func (p *PostgresStore) GetMessage(ctx context.Context, id uint) (*entities.Message, error) {
+	var m entities.Message
+	if err := p.DB.First(&m, id).Error; err != nil {
+		return nil, err
+	}
+	return &m, nil
+}
+
+func (p *PostgresStore) GetMessagesByUser(ctx context.Context, userID uint) ([]entities.Message, error) {
+	var messages []entities.Message
+	if err := p.DB.Where("sender_id = ? OR receiver_id = ?", userID, userID).Find(&messages).Error; err != nil {
+		return nil, err
+	}
+	return messages, nil
+}
+
+func (p *PostgresStore) UserExistsByID(ctx context.Context, id uint) (bool, error) {
+	var count int64
+	if err := p.DB.Model(&entities.User{}).Where("id = ?", id).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (p *PostgresStore) ListingExistsByID(ctx context.Context, id uint) (bool, error) {
+	var count int64
+	if err := p.DB.Model(&entities.Listing{}).Where("id = ?", id).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}

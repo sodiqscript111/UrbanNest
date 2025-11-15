@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"UrbanNest/internal/entities"
+	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/services"
 	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
@@ -10,7 +11,7 @@ import (
 	"strconv"
 )
 
-func CreateBooking(db *store.PostgresStore, producer *kafka.Producer) gin.HandlerFunc {
+func CreateBooking(db interfaces.Database, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var booking entities.Booking
 		if err := c.ShouldBindJSON(&booking); err != nil {
@@ -28,7 +29,7 @@ func CreateBooking(db *store.PostgresStore, producer *kafka.Producer) gin.Handle
 	}
 }
 
-func GetBooking(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetBooking(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -46,7 +47,7 @@ func GetBooking(db *store.PostgresStore, redis *store.RedisStore, producer *kafk
 	}
 }
 
-func GetBookingsByUser(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetBookingsByUser(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -64,7 +65,7 @@ func GetBookingsByUser(db *store.PostgresStore, redis *store.RedisStore, produce
 	}
 }
 
-func GetBookingsByHost(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetBookingsByHost(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		hostID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -82,7 +83,7 @@ func GetBookingsByHost(db *store.PostgresStore, redis *store.RedisStore, produce
 	}
 }
 
-func CancelBooking(db *store.PostgresStore, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func CancelBooking(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {

@@ -10,6 +10,7 @@ type Database interface {
 	//Users operations
 	CreateUser(ctx context.Context, user *entities.User) error
 	GetUser(ctx context.Context, id uint) (*entities.User, error)
+	UserExistsByID(ctx context.Context, id uint) (bool, error)
 
 	//Listings operations
 	CreateListing(ctx context.Context, listing *entities.Listing) error
@@ -17,6 +18,7 @@ type Database interface {
 	UpdateListing(ctx context.Context, listing *entities.Listing) error
 	DeleteListing(ctx context.Context, id uint) error
 	CheckAvailability(ctx context.Context, listingID uint, startDate, endDate string) (bool, error)
+	ListingExistsByID(ctx context.Context, id uint) (bool, error)
 
 	//Bookings operations
 	CreateBooking(ctx context.Context, booking *entities.Booking) error
@@ -32,4 +34,9 @@ type Database interface {
 	CreateReview(ctx context.Context, review *entities.Review) error
 	GetReview(ctx context.Context, id uint) (*entities.Review, error)
 	GetReviewsByListing(ctx context.Context, listingID uint) ([]entities.Review, error)
+
+	//Messages operations
+	CreateMessage(ctx context.Context, message *entities.Message) error
+	GetMessage(ctx context.Context, id uint) (*entities.Message, error)
+	GetMessagesByUser(ctx context.Context, userID uint) ([]entities.Message, error)
 }
