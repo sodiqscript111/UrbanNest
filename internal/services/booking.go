@@ -116,9 +116,8 @@ func (s *BookingService) GetBookingsByUser(ctx context.Context, userID uint) ([]
 
 func (s *BookingService) GetBookingsByHost(ctx context.Context, hostID uint) ([]entities.Booking, error) {
 
-	var host entities.User
-	if err := s.db.DB.First(&host, hostID).Error; err != nil {
-		return nil, fmt.Errorf("host not found")
+	if _, err := s.db.GetUser(ctx, hostID); err != nil {
+		return nil, fmt.Errorf("user not found")
 	}
 
 	if s.redis != nil {
@@ -128,9 +127,8 @@ func (s *BookingService) GetBookingsByHost(ctx context.Context, hostID uint) ([]
 		}
 	}
 
-	var bookings []entities.Booking
-	if err := s.db.DB.Joins("JOIN listings ON listings.id = bookings.listing_id").
-		Where("listings.host_id = ?", hostID).Find(&bookings).Error; err != nil {
+	bookings, err := s.db.GetBookingsByHost(ctx, hostID)
+	if err != nil {
 		return nil, err
 	}
 
@@ -144,9 +142,9 @@ func (s *BookingService) GetBookingsByHost(ctx context.Context, hostID uint) ([]
 }
 
 func (s *BookingService) CancelBooking(ctx context.Context, id uint) error {
-	var booking entities.Booking
-	if err := s.db.DB.First(&booking, id).Error; err != nil {
-		return fmt.Errorf("booking not found")
+	booking, err := s.db.GetBooking(ctx, id)
+	if err != nil {
+		return err
 	}
 
 	if booking.Status == "canceled" {
@@ -154,10 +152,9 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uint) error {
 	}
 
 	booking.Status = "canceled"
-	if err := s.db.DB.Save(&booking).Error; err != nil {
+	if err := s.db.UpdateBooking(ctx, booking); err != nil {
 		return err
 	}
-
 	if err := s.db.DB.Where("listing_id = ? AND start_date = ? AND end_date = ?",
 		booking.ListingID, booking.StartDate, booking.EndDate).Delete(&entities.BookedDates{}).Error; err != nil {
 		return err

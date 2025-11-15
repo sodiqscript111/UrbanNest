@@ -25,5 +25,6 @@ type Database interface {
 	GetBookingsByHost(ctx context.Context, hostID uint) ([]entities.Booking, error)
 	UpdateBooking(ctx context.Context, booking *entities.Booking) error
 	DeleteBooking(ctx context.Context, bookingID uint) error
+	DeleteBookedDate(ctx context.Context, listingID uint, startDate, endDate time.Time) error
 	FindConflictingBookings(ctx context.Context, listingID uint, startDate, endDate time.Time) ([]entities.BookedDates, error)
 }
