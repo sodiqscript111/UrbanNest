@@ -27,4 +27,9 @@ type Database interface {
 	DeleteBooking(ctx context.Context, bookingID uint) error
 	DeleteBookedDate(ctx context.Context, listingID uint, startDate, endDate time.Time) error
 	FindConflictingBookings(ctx context.Context, listingID uint, startDate, endDate time.Time) ([]entities.BookedDates, error)
+
+	//Reviews operations
+	CreateReview(ctx context.Context, review *entities.Review) error
+	GetReview(ctx context.Context, id uint) (*entities.Review, error)
+	GetReviewsByListing(ctx context.Context, listingID uint) ([]entities.Review, error)
 }
