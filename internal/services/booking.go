@@ -20,22 +20,19 @@ func NewBookingService(db interfaces.Database, redis *store.RedisStore, producer
 	return &BookingService{db, redis, producer}
 }
 func (s *BookingService) CreateBooking(ctx context.Context, booking *entities.Booking) error {
-	// Validate
+
 	if booking.StartDate.After(booking.EndDate) || booking.StartDate.Before(time.Now()) {
 		return fmt.Errorf("invalid date range")
 	}
 
-	// Check user
 	if _, err := s.db.GetUser(ctx, booking.UserID); err != nil {
 		return fmt.Errorf("user not found")
 	}
 
-	// Check listing
 	if _, err := s.db.GetListing(ctx, booking.ListingID); err != nil {
 		return fmt.Errorf("listing not found")
 	}
 
-	// Check conflicts
 	conflicts, err := s.db.FindConflictingBookings(ctx, booking.ListingID, booking.StartDate, booking.EndDate)
 	if err != nil {
 		return err
@@ -44,27 +41,23 @@ func (s *BookingService) CreateBooking(ctx context.Context, booking *entities.Bo
 		return fmt.Errorf("listing is not available for selected dates")
 	}
 
-	// Default
 	booking.Status = "pending"
 
-	// Save
 	if err := s.db.CreateBooking(ctx, booking); err != nil {
 		return err
 	}
 
-	// Redis
 	if s.redis != nil {
 		if err := s.redis.CacheBooking(ctx, booking); err != nil {
 			return err
 		}
 	}
 
-	// Kafka
 	return s.producer.PublishMessage(ctx, "booking.created", booking)
 }
 
 func (s *BookingService) GetBooking(ctx context.Context, id uint) (*entities.Booking, error) {
-	// Try Redis cache first
+
 	if s.redis != nil {
 		booking, err := s.redis.GetBooking(ctx, fmt.Sprintf("%d", id))
 		if err == nil {
