@@ -100,6 +100,12 @@ func (p *PostgresStore) UpdateBooking(ctx context.Context, booking *entities.Boo
 func (p *PostgresStore) DeleteBooking(ctx context.Context, bookingID uint) error {
 	return p.DB.Delete(&entities.Booking{}, bookingID).Error
 }
+func (p *PostgresStore) DeleteBookedDate(ctx context.Context, listingID uint, startDate, endDate time.Time) error {
+	return p.DB.Where(
+		"listing_id = ? AND start_date = ? AND end_date = ?",
+		listingID, startDate, endDate,
+	).Delete(&entities.BookedDates{}).Error
+}
 
 func (p *PostgresStore) FindConflictingBookings(ctx context.Context, listingID uint, start, end time.Time) ([]entities.BookedDates, error) {
 	var bookings []entities.BookedDates
@@ -108,4 +114,24 @@ func (p *PostgresStore) FindConflictingBookings(ctx context.Context, listingID u
 			listingID, end, start).
 		Find(&bookings).Error
 	return bookings, err
+}
+
+func (p *PostgresStore) CreateReview(ctx context.Context, review *entities.Review) error {
+	return p.DB.Create(review).Error
+}
+
+func (p *PostgresStore) GetReview(ctx context.Context, id uint) (*entities.Review, error) {
+	var r entities.Review
+	if err := p.DB.First(&r, id).Error; err != nil {
+		return nil, err
+	}
+	return &r, nil
+}
+
+func (p *PostgresStore) GetReviewsByListing(ctx context.Context, listingID uint) ([]entities.Review, error) {
+	var reviews []entities.Review
+	if err := p.DB.Where("listing_id = ?", listingID).Find(&reviews).Error; err != nil {
+		return nil, err
+	}
+	return reviews, nil
 }

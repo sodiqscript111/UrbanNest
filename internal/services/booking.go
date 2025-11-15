@@ -72,14 +72,12 @@ func (s *BookingService) GetBooking(ctx context.Context, id uint) (*entities.Boo
 		}
 	}
 
-	// Fetch from DB
 	booking, err := s.db.GetBooking(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	return booking, nil
 
-	// Cache in Redis
 	if s.redis != nil {
 		if err := s.redis.CacheBooking(ctx, booking); err != nil {
 			return nil, err
@@ -93,20 +91,17 @@ func (s *BookingService) GetBookingsByUser(ctx context.Context, userID uint) ([]
 		return nil, fmt.Errorf("user not found")
 	}
 
-	// Try Redis
 	if s.redis != nil {
 		if bookings, err := s.redis.GetBookingsByUser(ctx, userID); err == nil && len(bookings) > 0 {
 			return bookings, nil
 		}
 	}
 
-	// DB
 	bookings, err := s.db.GetBookingsByUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Cache
 	if s.redis != nil {
 		_ = s.redis.CacheBookingsByUser(ctx, userID, bookings)
 	}
@@ -142,9 +137,10 @@ func (s *BookingService) GetBookingsByHost(ctx context.Context, hostID uint) ([]
 }
 
 func (s *BookingService) CancelBooking(ctx context.Context, id uint) error {
+
 	booking, err := s.db.GetBooking(ctx, id)
 	if err != nil {
-		return err
+		return fmt.Errorf("booking not found")
 	}
 
 	if booking.Status == "canceled" {
@@ -155,23 +151,18 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uint) error {
 	if err := s.db.UpdateBooking(ctx, booking); err != nil {
 		return err
 	}
-	if err := s.db.DB.Where("listing_id = ? AND start_date = ? AND end_date = ?",
-		booking.ListingID, booking.StartDate, booking.EndDate).Delete(&entities.BookedDates{}).Error; err != nil {
+
+	if err := s.db.DeleteBookedDate(ctx, booking.ListingID, booking.StartDate, booking.EndDate); err != nil {
 		return err
 	}
 
 	if s.redis != nil {
-		if err := s.redis.Client.Del(ctx, fmt.Sprintf("booking:%d", booking.ID)).Err(); err != nil {
-			return err
-		}
-		if err := s.redis.Client.Del(ctx, fmt.Sprintf("user:%d:bookings", booking.UserID)).Err(); err != nil {
-			return err
-		}
-		var listing entities.Listing
-		if err := s.db.DB.Where("id = ?", booking.ListingID).First(&listing).Error; err == nil {
-			if err := s.redis.Client.Del(ctx, fmt.Sprintf("host:%d:bookings", listing.HostID)).Err(); err != nil {
-				return err
-			}
+		_ = s.redis.Client.Del(ctx, fmt.Sprintf("booking:%d", booking.ID)).Err()
+		_ = s.redis.Client.Del(ctx, fmt.Sprintf("user:%d:bookings", booking.UserID)).Err()
+
+		listing, err := s.db.GetListing(ctx, booking.ListingID)
+		if err == nil {
+			_ = s.redis.Client.Del(ctx, fmt.Sprintf("host:%d:bookings", listing.HostID)).Err()
 		}
 	}
 
