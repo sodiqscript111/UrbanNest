@@ -4,7 +4,6 @@ import (
 	"UrbanNest/internal/entities"
 	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/services"
-	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -29,7 +28,7 @@ func CreateBooking(db interfaces.Database, producer *kafka.Producer) gin.Handler
 	}
 }
 
-func GetBooking(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetBooking(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -47,7 +46,7 @@ func GetBooking(db interfaces.Database, redis *store.RedisStore, producer *kafka
 	}
 }
 
-func GetBookingsByUser(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetBookingsByUser(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -65,7 +64,7 @@ func GetBookingsByUser(db interfaces.Database, redis *store.RedisStore, producer
 	}
 }
 
-func GetBookingsByHost(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetBookingsByHost(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		hostID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -83,7 +82,7 @@ func GetBookingsByHost(db interfaces.Database, redis *store.RedisStore, producer
 	}
 }
 
-func CancelBooking(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func CancelBooking(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {

@@ -7,12 +7,12 @@ import (
 )
 
 type Database interface {
-	//Users operations
+
 	CreateUser(ctx context.Context, user *entities.User) error
 	GetUser(ctx context.Context, id uint) (*entities.User, error)
 	UserExistsByID(ctx context.Context, id uint) (bool, error)
 
-	//Listings operations
+
 	CreateListing(ctx context.Context, listing *entities.Listing) error
 	GetListing(ctx context.Context, id uint) (*entities.Listing, error)
 	UpdateListing(ctx context.Context, listing *entities.Listing) error
@@ -20,7 +20,6 @@ type Database interface {
 	CheckAvailability(ctx context.Context, listingID uint, startDate, endDate string) (bool, error)
 	ListingExistsByID(ctx context.Context, id uint) (bool, error)
 
-	//Bookings operations
 	CreateBooking(ctx context.Context, booking *entities.Booking) error
 	GetBooking(ctx context.Context, id uint) (*entities.Booking, error)
 	GetBookingsByUser(ctx context.Context, userID uint) ([]entities.Booking, error)
@@ -30,12 +29,12 @@ type Database interface {
 	DeleteBookedDate(ctx context.Context, listingID uint, startDate, endDate time.Time) error
 	FindConflictingBookings(ctx context.Context, listingID uint, startDate, endDate time.Time) ([]entities.BookedDates, error)
 
-	//Reviews operations
+	
 	CreateReview(ctx context.Context, review *entities.Review) error
 	GetReview(ctx context.Context, id uint) (*entities.Review, error)
 	GetReviewsByListing(ctx context.Context, listingID uint) ([]entities.Review, error)
 
-	//Messages operations
+
 	CreateMessage(ctx context.Context, message *entities.Message) error
 	GetMessage(ctx context.Context, id uint) (*entities.Message, error)
 	GetMessagesByUser(ctx context.Context, userID uint) ([]entities.Message, error)

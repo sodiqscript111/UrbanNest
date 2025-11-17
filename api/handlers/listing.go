@@ -4,7 +4,6 @@ import (
 	"UrbanNest/internal/entities"
 	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/services"
-	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -12,7 +11,7 @@ import (
 	"time"
 )
 
-func CreateListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func CreateListing(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var listing entities.Listing
 		if err := c.ShouldBindJSON(&listing); err != nil {
@@ -30,7 +29,7 @@ func CreateListing(db interfaces.Database, redis *store.RedisStore, producer *ka
 	}
 }
 
-func GetListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetListing(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -48,7 +47,7 @@ func GetListing(db interfaces.Database, redis *store.RedisStore, producer *kafka
 	}
 }
 
-func UpdateListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func UpdateListing(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -72,7 +71,7 @@ func UpdateListing(db interfaces.Database, redis *store.RedisStore, producer *ka
 	}
 }
 
-func DeleteListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func DeleteListing(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -90,7 +89,7 @@ func DeleteListing(db interfaces.Database, redis *store.RedisStore, producer *ka
 	}
 }
 
-func CheckAvailability(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func CheckAvailability(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {

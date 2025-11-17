@@ -24,7 +24,8 @@ func main() {
 		log.Fatal(err)
 	}
 	var database interfaces.Database = db
-	redisStore := store.NewRedisStore(config.RedisAddr, config.RedisPassword)
+	var redisStore interfaces.CacheStore = store.NewRedisStore(config.RedisAddr, config.RedisPassword)
+
 
 	if *mode == "server" {
 		bookingProducer := kafka.NewProducer(strings.Split(config.KafkaBrokers, ","), "booking.created,booking.canceled")

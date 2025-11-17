@@ -4,14 +4,13 @@ import (
 	"UrbanNest/internal/entities"
 	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/services"
-	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
-func CreateReview(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func CreateReview(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var review entities.Review
 		if err := c.ShouldBindJSON(&review); err != nil {
@@ -29,7 +28,7 @@ func CreateReview(db interfaces.Database, redis *store.RedisStore, producer *kaf
 	}
 }
 
-func GetReview(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetReview(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -47,7 +46,7 @@ func GetReview(db interfaces.Database, redis *store.RedisStore, producer *kafka.
 	}
 }
 
-func GetReviewsByListing(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetReviewsByListing(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		listingID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {

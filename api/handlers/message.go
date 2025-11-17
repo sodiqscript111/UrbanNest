@@ -4,14 +4,13 @@ import (
 	"UrbanNest/internal/entities"
 	"UrbanNest/internal/interfaces"
 	"UrbanNest/internal/services"
-	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
-func CreateMessage(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func CreateMessage(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var message entities.Message
 		if err := c.ShouldBindJSON(&message); err != nil {
@@ -29,7 +28,7 @@ func CreateMessage(db interfaces.Database, redis *store.RedisStore, producer *ka
 	}
 }
 
-func GetMessage(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetMessage(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
@@ -47,7 +46,7 @@ func GetMessage(db interfaces.Database, redis *store.RedisStore, producer *kafka
 	}
 }
 
-func GetMessagesByUser(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) gin.HandlerFunc {
+func GetMessagesByUser(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
 		if err != nil {
