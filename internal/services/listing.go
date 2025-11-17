@@ -3,7 +3,6 @@ package services
 import (
 	"UrbanNest/internal/entities"
 	"UrbanNest/internal/interfaces"
-	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
 	"context"
 	"fmt"
@@ -12,11 +11,11 @@ import (
 
 type ListingService struct {
 	db       interfaces.Database
-	redis    *store.RedisStore
+	redis    interfaces.CacheStore
 	producer *kafka.Producer
 }
 
-func NewListingService(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) *ListingService {
+func NewListingService(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) *ListingService {
 	return &ListingService{db, redis, producer}
 }
 
@@ -97,7 +96,7 @@ func (s *ListingService) DeleteListing(ctx context.Context, id uint) error {
 	}
 
 	if s.redis != nil {
-		if err := s.redis.Client.Del(ctx, fmt.Sprintf("listing:%d", id)).Err(); err != nil {
+		if err := s.redis.Delete(ctx, fmt.Sprintf("listing:%d", id)); err != nil {
 			return err
 		}
 	}

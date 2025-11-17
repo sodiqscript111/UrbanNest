@@ -3,7 +3,6 @@ package services
 import (
 	"UrbanNest/internal/entities"
 	"UrbanNest/internal/interfaces"
-	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
 	"context"
 	"fmt"
@@ -11,16 +10,16 @@ import (
 
 type ReviewService struct {
 	db       interfaces.Database
-	redis    *store.RedisStore
+	redis    interfaces.CacheStore
 	producer *kafka.Producer
 }
 
-func NewReviewService(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) *ReviewService {
+func NewReviewService(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) *ReviewService {
 	return &ReviewService{db, redis, producer}
 }
 
 func (s *ReviewService) CreateReview(ctx context.Context, review *entities.Review) error {
-	// Validate review
+
 	if review.Rating < 1 || review.Rating > 5 {
 		return fmt.Errorf("rating must be between 1 and 5")
 	}

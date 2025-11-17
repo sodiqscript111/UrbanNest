@@ -3,7 +3,6 @@ package services
 import (
 	"UrbanNest/internal/entities"
 	"UrbanNest/internal/interfaces"
-	"UrbanNest/internal/store"
 	"UrbanNest/pkg/kafka"
 	"context"
 	"fmt"
@@ -12,11 +11,11 @@ import (
 
 type BookingService struct {
 	db       interfaces.Database
-	redis    *store.RedisStore
+	redis    interfaces.CacheStore
 	producer *kafka.Producer
 }
 
-func NewBookingService(db interfaces.Database, redis *store.RedisStore, producer *kafka.Producer) *BookingService {
+func NewBookingService(db interfaces.Database, redis interfaces.CacheStore, producer *kafka.Producer) *BookingService {
 	return &BookingService{db, redis, producer}
 }
 func (s *BookingService) CreateBooking(ctx context.Context, booking *entities.Booking) error {
@@ -150,12 +149,12 @@ func (s *BookingService) CancelBooking(ctx context.Context, id uint) error {
 	}
 
 	if s.redis != nil {
-		_ = s.redis.Client.Del(ctx, fmt.Sprintf("booking:%d", booking.ID)).Err()
-		_ = s.redis.Client.Del(ctx, fmt.Sprintf("user:%d:bookings", booking.UserID)).Err()
+		_ = s.redis.Delete(ctx, fmt.Sprintf("booking:%d", booking.ID))
+		_ = s.redis.Delete(ctx, fmt.Sprintf("user:%d:bookings", booking.UserID))
 
 		listing, err := s.db.GetListing(ctx, booking.ListingID)
 		if err == nil {
-			_ = s.redis.Client.Del(ctx, fmt.Sprintf("host:%d:bookings", listing.HostID)).Err()
+			_ = s.redis.Delete(ctx, fmt.Sprintf("host:%d:bookings", listing.HostID))
 		}
 	}
 

@@ -181,3 +181,6 @@ func (s *RedisStore) GetBookingsByHost(ctx context.Context, hostID uint) ([]enti
 	}
 	return bookings, nil
 }
+func (s *RedisStore) Delete(ctx context.Context, key string) error {
+	return s.Client.Del(ctx, key).Err()
+}

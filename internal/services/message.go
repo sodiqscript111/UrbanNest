@@ -12,7 +12,7 @@ import (
 
 type MessageService struct {
 	db       interfaces.Database
-	redis    *store.RedisStore
+	redis    interfaces.CacheStore
 	producer *kafka.Producer
 }
 
@@ -56,10 +56,10 @@ func (s *MessageService) CreateMessage(ctx context.Context, message *entities.Me
 			return err
 		}
 
-		if err := s.redis.Client.Del(ctx, fmt.Sprintf("user:%d:messages", message.SenderID)).Err(); err != nil {
+		if err := s.redis.Delete(ctx, fmt.Sprintf("user:%d:messages", message.SenderID)); err != nil {
 			return err
 		}
-		if err := s.redis.Client.Del(ctx, fmt.Sprintf("user:%d:messages", message.ReceiverID)).Err(); err != nil {
+		if err := s.redis.Delete(ctx, fmt.Sprintf("user:%d:messages", message.ReceiverID)); err != nil {
 			return err
 		}
 	}
